@@ -10,7 +10,6 @@ import {
   Lock,
   Check,
   AlertCircle,
-  Linkedin,
   Mail,
   Phone,
   Save

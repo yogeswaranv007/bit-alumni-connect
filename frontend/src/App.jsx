@@ -1,122 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
+import { DashboardLayout } from './components/layout/DashboardLayout';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Public Pages
+import { LandingPage } from './pages/public/LandingPage';
+import { LoginPage } from './pages/public/LoginPage';
+import { RegisterPage } from './pages/public/RegisterPage';
+import { PublicVerifyPage } from './pages/public/PublicVerifyPage';
+import { DirectoryPage } from './pages/alumni/DirectoryPage';
 
+// Alumni Pages
+import { AlumniDashboard } from './pages/alumni/AlumniDashboard';
+import { CreateProfilePage } from './pages/alumni/CreateProfilePage';
+import { AlumniProfilePage } from './pages/alumni/AlumniProfilePage';
+import { DigitalIdPage } from './pages/alumni/DigitalIdPage';
+
+// Admin Pages
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminAlumniListPage } from './pages/admin/AdminAlumniListPage';
+
+export const App = () => {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify/:token" element={<PublicVerifyPage />} />
 
-      <div className="ticks"></div>
+      {/* Directory is accessible to both guests and authenticated members */}
+      <Route path="/directory" element={<DirectoryPage />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Alumni Self-Registration Wizard (Protected) */}
+      <Route
+        path="/alumni/create-profile"
+        element={
+          <ProtectedRoute requiredRole="ROLE_ALUMNI">
+            <CreateProfilePage />
+          </ProtectedRoute>
+        }
+      />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+      {/* Alumni Dashboard Routes (Protected within DashboardLayout) */}
+      <Route
+        path="/alumni"
+        element={
+          <ProtectedRoute requiredRole="ROLE_ALUMNI">
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<AlumniDashboard />} />
+        <Route path="profile" element={<AlumniProfilePage />} />
+        <Route path="virtual-id" element={<DigitalIdPage />} />
+        <Route index element={<Navigate to="/alumni/dashboard" replace />} />
+      </Route>
 
-export default App
+      {/* Admin Console Routes (Protected within DashboardLayout) */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRole="ROLE_ADMIN">
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="alumni" element={<AdminAlumniListPage />} />
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+      </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+export default App;

@@ -8,12 +8,12 @@ import {
   Calendar,
   Briefcase,
   MapPin,
-  Linkedin,
   Filter,
   ChevronLeft,
   ChevronRight,
   GraduationCap
 } from 'lucide-react';
+import { LinkedInIcon } from '../../components/common/Icons';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { useAuth } from '../../context/AuthContext';
@@ -266,7 +266,7 @@ export const DirectoryPage = () => {
                       rel="noopener noreferrer"
                       className="text-xs font-bold text-bit-700 hover:text-bit-800 flex items-center space-x-1"
                     >
-                      <Linkedin className="w-3.5 h-3.5" />
+                      <LinkedInIcon className="w-3.5 h-3.5" />
                       <span>Connect</span>
                     </a>
                   )}

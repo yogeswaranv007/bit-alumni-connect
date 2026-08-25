@@ -10,7 +10,6 @@ import {
   MapPin,
   Phone,
   Mail,
-  Linkedin,
   AlertCircle,
   CheckCircle2,
   ArrowRight
