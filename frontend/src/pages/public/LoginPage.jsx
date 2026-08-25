@@ -135,11 +135,11 @@ export const LoginPage = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDemoFill('praveen@bitsathy.ac.in', 'Password@123')}
+                  onClick={() => handleDemoFill('alumni@bitsathy.ac.in', 'Password@123')}
                   className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold text-slate-700 text-left transition"
                 >
                   <p className="font-bold text-teal-700">Alumni Account</p>
-                  <p className="text-[10px] text-slate-400 truncate">praveen@bitsathy.ac.in</p>
+                  <p className="text-[10px] text-slate-400 truncate">alumni@bitsathy.ac.in</p>
                 </button>
               </div>
             </div>
