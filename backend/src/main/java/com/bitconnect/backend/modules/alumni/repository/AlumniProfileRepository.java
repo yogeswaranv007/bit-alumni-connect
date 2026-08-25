@@ -62,7 +62,6 @@ public interface AlumniProfileRepository extends JpaRepository<AlumniProfile, UU
                OR LOWER(p.currentCompany) LIKE LOWER(CONCAT('%', :search, '%'))
                OR LOWER(p.currentDesignation) LIKE LOWER(CONCAT('%', :search, '%'))
                OR LOWER(p.city) LIKE LOWER(CONCAT('%', :search, '%')))
-        ORDER BY u.fullName ASC
     """)
     Page<AlumniDirectoryResponse> searchDirectory(
             @Param("search") String search,
