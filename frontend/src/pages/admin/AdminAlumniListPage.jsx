@@ -19,6 +19,7 @@ import {
   Building,
   Calendar,
   User,
+  Users,
   AlertTriangle,
   RotateCw
 } from 'lucide-react';

@@ -73,33 +73,19 @@ public interface AlumniProfileRepository extends JpaRepository<AlumniProfile, UU
     /**
      * Admin query retrieving detailed alumni profiles filterable by status, department, and search terms.
      */
-    @Query(
-            value = """
-                SELECT p FROM AlumniProfile p
-                JOIN FETCH p.user u
-                JOIN FETCH p.department d
-                WHERE (:status IS NULL OR p.verificationStatus = :status)
-                  AND (:departmentId IS NULL OR d.id = :departmentId)
-                  AND (:batchEndYear IS NULL OR p.batchEndYear = :batchEndYear)
-                  AND (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
-                       OR LOWER(p.rollNumber) LIKE LOWER(CONCAT('%', :search, '%'))
-                       OR LOWER(p.registerNumber) LIKE LOWER(CONCAT('%', :search, '%'))
-                       OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))
-                ORDER BY p.createdAt DESC
-            """,
-            countQuery = """
-                SELECT COUNT(p) FROM AlumniProfile p
-                JOIN p.user u
-                JOIN p.department d
-                WHERE (:status IS NULL OR p.verificationStatus = :status)
-                  AND (:departmentId IS NULL OR d.id = :departmentId)
-                  AND (:batchEndYear IS NULL OR p.batchEndYear = :batchEndYear)
-                  AND (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
-                       OR LOWER(p.rollNumber) LIKE LOWER(CONCAT('%', :search, '%'))
-                       OR LOWER(p.registerNumber) LIKE LOWER(CONCAT('%', :search, '%'))
-                       OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))
-            """
-    )
+    @EntityGraph(attributePaths = {"user", "department"})
+    @Query("""
+        SELECT p FROM AlumniProfile p
+        JOIN p.user u
+        JOIN p.department d
+        WHERE (:status IS NULL OR p.verificationStatus = :status)
+          AND (:departmentId IS NULL OR d.id = :departmentId)
+          AND (:batchEndYear IS NULL OR p.batchEndYear = :batchEndYear)
+          AND (:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(p.rollNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(p.registerNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))
+    """)
     Page<AlumniProfile> searchAdminProfiles(
             @Param("status") VerificationStatus status,
             @Param("departmentId") Integer departmentId,
