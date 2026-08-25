@@ -34,6 +34,7 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
     private final AlumniProfileRepository alumniProfileRepository;
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
+    private final com.bitconnect.backend.modules.virtualid.service.VirtualIdService virtualIdService;
 
     @Override
     @Transactional
@@ -201,6 +202,10 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
 
         AlumniProfile verifiedProfile = alumniProfileRepository.save(profile);
         log.info("Alumni profile ID: {} verified successfully by admin ID: {}", id, adminId);
+
+        // Automatically issue Virtual Alumni ID upon verification
+        virtualIdService.issueVirtualId(verifiedProfile);
+
         return AlumniProfileResponse.fromEntity(verifiedProfile);
     }
 
