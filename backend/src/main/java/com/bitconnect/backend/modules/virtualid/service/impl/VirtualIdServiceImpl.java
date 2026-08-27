@@ -42,6 +42,10 @@ public class VirtualIdServiceImpl implements VirtualIdService {
     @Override
     @Transactional
     public VirtualAlumniId issueVirtualId(AlumniProfile profile) {
+        if (profile.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            throw new BadRequestException("Virtual Alumni ID and dynamic QR code can only be generated for approved alumni profiles.");
+        }
+
         if (virtualAlumniIdRepository.existsByAlumniProfileId(profile.getId())) {
             log.info("Virtual ID already exists for alumni profile ID: {}", profile.getId());
             return virtualAlumniIdRepository.findByAlumniProfileId(profile.getId()).orElseThrow();
@@ -210,5 +214,60 @@ public class VirtualIdServiceImpl implements VirtualIdService {
                 : null;
 
         return VirtualIdCardResponse.fromEntity(virtualId, qrBase64, verificationUrl, tokenString);
+    }
+
+    @Override
+    public VirtualIdCardResponse generatePreview(
+            String fullName,
+            String profilePhotoUrl,
+            String departmentName,
+            String departmentCode,
+            String degree,
+            Integer batchStartYear,
+            Integer batchEndYear,
+            String rollNumber,
+            String registerNumber,
+            LocalDate dateOfBirth,
+            String bloodGroup,
+            String phoneNumber,
+            String personalEmail,
+            String permanentAddress,
+            String city,
+            String state,
+            String country,
+            String postalCode,
+            String alumniIdCardNumber) {
+
+        String dummyVerificationUrl = String.format("%s/verify/preview-mode", frontendBaseUrl.replaceAll("/$", ""));
+        String qrBase64 = qrCodeGeneratorService.generateQrCodeBase64(dummyVerificationUrl);
+
+        return new VirtualIdCardResponse(
+                UUID.randomUUID(),
+                alumniIdCardNumber != null ? alumniIdCardNumber : "BIT-ALU-PREVIEW",
+                VirtualIdStatus.ACTIVE,
+                LocalDate.now(),
+                null,
+                fullName,
+                profilePhotoUrl,
+                departmentName,
+                departmentCode,
+                degree,
+                batchStartYear,
+                batchEndYear,
+                rollNumber,
+                registerNumber,
+                dateOfBirth,
+                bloodGroup,
+                phoneNumber,
+                personalEmail,
+                permanentAddress,
+                city,
+                state,
+                country,
+                postalCode,
+                qrBase64,
+                dummyVerificationUrl,
+                "preview-token"
+        );
     }
 }

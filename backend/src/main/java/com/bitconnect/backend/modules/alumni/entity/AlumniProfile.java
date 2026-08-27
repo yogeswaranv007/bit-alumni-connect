@@ -83,7 +83,7 @@ public class AlumniProfile extends BaseAuditableEntity {
     private Integer batchEndYear;
 
     // Personal Details
-    @Column(name = "profile_photo_url", length = 255)
+    @Column(name = "profile_photo_url", columnDefinition = "TEXT")
     private String profilePhotoUrl;
 
     @Column(name = "date_of_birth")
@@ -123,7 +123,7 @@ public class AlumniProfile extends BaseAuditableEntity {
     @Column(name = "industry", length = 80)
     private String industry;
 
-    @Column(name = "linkedin_url", length = 255)
+    @Column(name = "linkedin_url", columnDefinition = "TEXT")
     private String linkedinUrl;
 
     // Verification Workflow State

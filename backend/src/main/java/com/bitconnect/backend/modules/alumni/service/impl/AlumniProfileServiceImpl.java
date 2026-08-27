@@ -16,14 +16,20 @@ import com.bitconnect.backend.modules.department.entity.Department;
 import com.bitconnect.backend.modules.department.repository.DepartmentRepository;
 import com.bitconnect.backend.modules.user.entity.User;
 import com.bitconnect.backend.modules.user.repository.UserRepository;
+import com.bitconnect.backend.modules.virtualid.service.VirtualIdService;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -34,7 +40,7 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
     private final AlumniProfileRepository alumniProfileRepository;
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
-    private final com.bitconnect.backend.modules.virtualid.service.VirtualIdService virtualIdService;
+    private final VirtualIdService virtualIdService;
 
     @Override
     @Transactional
@@ -105,7 +111,11 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
         AlumniProfile profile = alumniProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Alumni profile not found for this user"));
 
-        // Update editable personal & professional fields
+        // Once an alumni profile is verified, official profile details cannot be modified directly.
+        if (profile.getVerificationStatus() == VerificationStatus.VERIFIED) {
+            throw new BadRequestException("Official profile details cannot be modified directly once verified. Please submit a Profile Change Request to request changes for administrator review.");
+        }
+
         if (request.profilePhotoUrl() != null) {
             profile.setProfilePhotoUrl(request.profilePhotoUrl());
         }
@@ -168,16 +178,69 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
     @Override
     @Transactional(readOnly = true)
     public PagedResponse<AlumniDirectoryResponse> searchDirectory(String search, Integer departmentId, Integer batchEndYear, Pageable pageable) {
-        String sanitizedSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
-        Page<AlumniDirectoryResponse> page = alumniProfileRepository.searchDirectory(sanitizedSearch, departmentId, batchEndYear, pageable);
-        return PagedResponse.from(page);
+        Specification<AlumniProfile> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            // 1. Mandatory filters for public directory
+            predicates.add(cb.equal(root.get("verificationStatus"), VerificationStatus.VERIFIED));
+            predicates.add(cb.isTrue(root.get("isDirectoryVisible")));
+            predicates.add(cb.isTrue(root.get("user").get("isActive")));
+
+            // 2. Department filter
+            if (departmentId != null) {
+                predicates.add(cb.equal(root.get("department").get("id"), departmentId));
+            }
+
+            // 3. Batch year filter
+            if (batchEndYear != null) {
+                predicates.add(cb.equal(root.get("batchEndYear"), batchEndYear));
+            }
+
+            // 4. Keyword search
+            if (StringUtils.hasText(search)) {
+                String pattern = "%" + search.toLowerCase().trim() + "%";
+                Predicate nameLike = cb.like(cb.lower(root.get("user").get("fullName")), pattern);
+                Predicate companyLike = cb.like(cb.lower(root.get("currentCompany")), pattern);
+                Predicate desigLike = cb.like(cb.lower(root.get("currentDesignation")), pattern);
+                Predicate cityLike = cb.like(cb.lower(root.get("city")), pattern);
+                predicates.add(cb.or(nameLike, companyLike, desigLike, cityLike));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<AlumniProfile> page = alumniProfileRepository.findAll(spec, pageable);
+        return PagedResponse.from(page.map(AlumniDirectoryResponse::fromEntity));
     }
 
     @Override
     @Transactional(readOnly = true)
     public PagedResponse<AlumniProfileResponse> searchAdminProfiles(VerificationStatus status, Integer departmentId, Integer batchEndYear, String search, Pageable pageable) {
-        String sanitizedSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
-        Page<AlumniProfile> page = alumniProfileRepository.searchAdminProfiles(status, departmentId, batchEndYear, sanitizedSearch, pageable);
+        Specification<AlumniProfile> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (status != null) {
+                predicates.add(cb.equal(root.get("verificationStatus"), status));
+            }
+            if (departmentId != null) {
+                predicates.add(cb.equal(root.get("department").get("id"), departmentId));
+            }
+            if (batchEndYear != null) {
+                predicates.add(cb.equal(root.get("batchEndYear"), batchEndYear));
+            }
+            if (StringUtils.hasText(search)) {
+                String pattern = "%" + search.toLowerCase().trim() + "%";
+                Predicate nameLike = cb.like(cb.lower(root.get("user").get("fullName")), pattern);
+                Predicate rollLike = cb.like(cb.lower(root.get("rollNumber")), pattern);
+                Predicate regLike = cb.like(cb.lower(root.get("registerNumber")), pattern);
+                Predicate emailLike = cb.like(cb.lower(root.get("user").get("email")), pattern);
+                predicates.add(cb.or(nameLike, rollLike, regLike, emailLike));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<AlumniProfile> page = alumniProfileRepository.findAll(spec, pageable);
         return PagedResponse.from(page.map(AlumniProfileResponse::fromEntity));
     }
 

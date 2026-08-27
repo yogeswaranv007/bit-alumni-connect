@@ -21,4 +21,21 @@ public record AlumniDirectoryResponse(
         String city,
         String country
 ) {
+    public static AlumniDirectoryResponse fromEntity(com.bitconnect.backend.modules.alumni.entity.AlumniProfile profile) {
+        return new AlumniDirectoryResponse(
+                profile.getId(),
+                profile.getUser().getFullName(),
+                profile.getProfilePhotoUrl(),
+                profile.getDepartment() != null ? profile.getDepartment().getName() : null,
+                profile.getDepartment() != null ? profile.getDepartment().getCode() : null,
+                profile.getDegree(),
+                profile.getBatchEndYear(),
+                profile.getCurrentCompany(),
+                profile.getCurrentDesignation(),
+                profile.getIndustry(),
+                profile.getLinkedinUrl(),
+                profile.getCity(),
+                profile.getCountry()
+        );
+    }
 }

@@ -126,7 +126,8 @@ class AlumniProfileControllerTest {
                 .orElseThrow();
 
         String email = "lifecycle." + System.currentTimeMillis() + "@bitsathy.ac.in";
-        String alumniToken = createAlumniAndGetToken(email, "Praveen Kumar");
+        String uniqueName = "Praveen" + (System.currentTimeMillis() % 100000);
+        String alumniToken = createAlumniAndGetToken(email, uniqueName);
         String adminToken = createAdminAndGetToken();
 
         String rollNo = "20IT" + (System.currentTimeMillis() % 100000);
@@ -183,7 +184,7 @@ class AlumniProfileControllerTest {
         mockMvc.perform(get("/api/v1/alumni/profile/me")
                         .header("Authorization", "Bearer " + alumniToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.fullName", is("Praveen Kumar")))
+                .andExpect(jsonPath("$.data.fullName", is(uniqueName)))
                 .andExpect(jsonPath("$.data.currentCompany", is("Amazon")));
 
         // 4. Update own profile
@@ -222,10 +223,10 @@ class AlumniProfileControllerTest {
         // 6. Search directory -> Verified alumni must appear with privacy-safe fields
         mockMvc.perform(get("/api/v1/alumni/directory")
                         .header("Authorization", "Bearer " + alumniToken)
-                        .param("search", "Praveen")
+                        .param("search", uniqueName)
                         .param("departmentId", String.valueOf(itDept.getId())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[0].fullName", is("Praveen Kumar")))
+                .andExpect(jsonPath("$.data.content[0].fullName", is(uniqueName)))
                 .andExpect(jsonPath("$.data.content[0].currentCompany", is("Google")))
                 .andExpect(jsonPath("$.data.content[0].rollNumber").doesNotExist())
                 .andExpect(jsonPath("$.data.content[0].phoneNumber").doesNotExist());
@@ -243,7 +244,7 @@ class AlumniProfileControllerTest {
         // 8. Rejected profile should no longer appear in directory
         mockMvc.perform(get("/api/v1/alumni/directory")
                         .header("Authorization", "Bearer " + alumniToken)
-                        .param("search", "Praveen"))
+                        .param("search", uniqueName))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalElements", is(0)));
 
