@@ -1,122 +1,107 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
+import { DashboardLayout } from './components/layout/DashboardLayout';
+import { PublicLayout } from './components/layout/PublicLayout';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Public Community & Institutional Pages
+import LandingPage from './pages/public/LandingPage';
+import AlumniAssociationPage from './pages/public/AlumniAssociationPage';
+import ChaptersPage from './pages/public/ChaptersPage';
+import EventsPage from './pages/public/EventsPage';
+import GalleryPage from './pages/public/GalleryPage';
+import DistinguishedAlumniPage from './pages/public/DistinguishedAlumniPage';
+import NewsletterPage from './pages/public/NewsletterPage';
+import GraduationRegistrationPage from './pages/public/GraduationRegistrationPage';
+import ResourcesPage from './pages/public/ResourcesPage';
 
+// Auth & Verification Pages
+import { LoginPage } from './pages/public/LoginPage';
+import { RegisterPage } from './pages/public/RegisterPage';
+import { PublicVerifyPage } from './pages/public/PublicVerifyPage';
+import { DirectoryPage } from './pages/alumni/DirectoryPage';
+
+// Alumni Dashboard & Profile Pages
+import { AlumniDashboard } from './pages/alumni/AlumniDashboard';
+import { CreateProfilePage } from './pages/alumni/CreateProfilePage';
+import { AlumniProfilePage } from './pages/alumni/AlumniProfilePage';
+import { DigitalIdPage } from './pages/alumni/DigitalIdPage';
+import { ProfileChangeRequestPage } from './pages/alumni/ProfileChangeRequestPage';
+
+// Admin Console Pages
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminAlumniListPage } from './pages/admin/AdminAlumniListPage';
+import { AdminChangeRequestsPage } from './pages/admin/AdminChangeRequestsPage';
+import { AdminChangeRequestReviewPage } from './pages/admin/AdminChangeRequestReviewPage';
+
+export const App = () => {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Routes>
+      {/* Public Community & Institutional Routes with PublicLayout (Navbar & Footer) */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/alumni-association" element={<AlumniAssociationPage />} />
+        <Route path="/chapters" element={<ChaptersPage />} />
+        <Route path="/events" element={<EventsPage />} />
+        <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="/distinguished-alumni" element={<DistinguishedAlumniPage />} />
+        <Route path="/newsletter" element={<NewsletterPage />} />
+        <Route path="/graduation-registration" element={<GraduationRegistrationPage />} />
+        <Route path="/resources" element={<ResourcesPage />} />
+      </Route>
 
-      <div className="ticks"></div>
+      {/* Standalone Auth & Verification Routes */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify/:token" element={<PublicVerifyPage />} />
+      <Route path="/directory" element={<DirectoryPage />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Alumni Self-Registration Wizard (Protected) */}
+      <Route
+        path="/alumni/create-profile"
+        element={
+          <ProtectedRoute requiredRole="ROLE_ALUMNI">
+            <CreateProfilePage />
+          </ProtectedRoute>
+        }
+      />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+      {/* Alumni Dashboard Routes (Protected within DashboardLayout) */}
+      <Route
+        path="/alumni"
+        element={
+          <ProtectedRoute requiredRole="ROLE_ALUMNI">
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<AlumniDashboard />} />
+        <Route path="profile" element={<AlumniProfilePage />} />
+        <Route path="change-request" element={<ProfileChangeRequestPage />} />
+        <Route path="virtual-id" element={<DigitalIdPage />} />
+        <Route index element={<Navigate to="/alumni/dashboard" replace />} />
+      </Route>
 
-export default App
+      {/* Admin Console Routes (Protected within DashboardLayout) */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRole="ROLE_ADMIN">
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="alumni" element={<AdminAlumniListPage />} />
+        <Route path="change-requests" element={<AdminChangeRequestsPage />} />
+        <Route path="change-requests/:id" element={<AdminChangeRequestReviewPage />} />
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+      </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+export default App;
