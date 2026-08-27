@@ -111,7 +111,11 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
         AlumniProfile profile = alumniProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Alumni profile not found for this user"));
 
-        // Update editable personal & professional fields
+        // Once an alumni profile is verified, official profile details cannot be modified directly.
+        if (profile.getVerificationStatus() == VerificationStatus.VERIFIED) {
+            throw new BadRequestException("Official profile details cannot be modified directly once verified. Please submit a Profile Change Request to request changes for administrator review.");
+        }
+
         if (request.profilePhotoUrl() != null) {
             profile.setProfilePhotoUrl(request.profilePhotoUrl());
         }

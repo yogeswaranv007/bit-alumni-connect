@@ -10,9 +10,10 @@ import {
   ExternalLink,
   Printer,
   Sparkles,
-  Info,
+  RotateCw,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Layers
 } from 'lucide-react';
 
 export const DigitalIdPage = () => {
@@ -21,6 +22,7 @@ export const DigitalIdPage = () => {
   const [regenerating, setRegenerating] = useState(false);
   const [notification, setNotification] = useState('');
   const [error, setError] = useState('');
+  const [isFlipped, setIsFlipped] = useState(false);
 
   const fetchCard = async () => {
     setLoading(true);
@@ -44,6 +46,11 @@ export const DigitalIdPage = () => {
   }, []);
 
   const handleRegenerateQr = async () => {
+    const confirmed = window.confirm(
+      'Regenerating your QR code will immediately invalidate all existing screenshots and previous tokens. Do you want to proceed?'
+    );
+    if (!confirmed) return;
+
     setRegenerating(true);
     setNotification('');
     try {
@@ -64,7 +71,7 @@ export const DigitalIdPage = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner size="lg" text="Rendering your 3D Digital Alumni ID..." />;
+    return <LoadingSpinner size="lg" text="Rendering your Official BIT Digital Alumni ID..." />;
   }
 
   if (error || !cardData) {
@@ -75,7 +82,7 @@ export const DigitalIdPage = () => {
         </div>
         <h3 className="text-xl font-bold text-slate-800">Digital ID Not Yet Available</h3>
         <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-          {error || 'Your profile is currently under review by college administrators. Once approved, your Virtual Alumni ID and secure dynamic QR code will appear here automatically.'}
+          {error || 'Your profile is currently under review by college administrators. Once approved, your official BIT Virtual Alumni ID and secure dynamic QR code will appear here automatically.'}
         </p>
         <Link
           to="/alumni/dashboard"
@@ -91,27 +98,29 @@ export const DigitalIdPage = () => {
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-200">
       {/* Header */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-2xl bg-bit-50 text-bit-700 flex items-center justify-center font-bold">
+        <div className="flex items-center space-x-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-[#EB5323] flex items-center justify-center font-bold flex-shrink-0">
             <CreditCard className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              Virtual Alumni ID Card
+              Official BIT Alumni ID Card
             </h1>
             <p className="text-xs text-slate-500">
-              Your official digital credential for campus access, event check-ins, and institutional privileges
+              Interactive 3D digital identity badge inspired by the official Bannari Amman Institute of Technology Alumni Card
             </p>
           </div>
         </div>
 
-        <button
-          onClick={handlePrint}
-          className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs"
-        >
-          <Printer className="w-4 h-4" />
-          <span>Print / Save Badge</span>
-        </button>
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center justify-center space-x-1.5 px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs w-full sm:w-auto"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Print Badge</span>
+          </button>
+        </div>
       </div>
 
       {notification && (
@@ -122,12 +131,43 @@ export const DigitalIdPage = () => {
       )}
 
       {/* 3D Flippable Card Stage */}
-      <div className="bg-gradient-to-b from-slate-100 to-slate-200/60 rounded-3xl p-8 sm:p-12 border border-slate-200 flex flex-col items-center justify-center shadow-inner">
+      <div className="bg-gradient-to-b from-slate-100 to-slate-200/70 rounded-3xl p-6 sm:p-12 border border-slate-200 flex flex-col items-center justify-center shadow-inner space-y-4">
+        {/* Front / Back Side View Toggle Tabs */}
+        <div className="inline-flex p-1 rounded-2xl bg-slate-200/80 border border-slate-300 shadow-inner">
+          <button
+            onClick={() => setIsFlipped(false)}
+            className={`px-4 py-1.5 rounded-xl text-xs font-extrabold transition ${
+              !isFlipped
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Front Side (Identity & Photo)
+          </button>
+          <button
+            onClick={() => setIsFlipped(true)}
+            className={`px-4 py-1.5 rounded-xl text-xs font-extrabold transition ${
+              isFlipped
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Back Side (Personal & Association)
+          </button>
+        </div>
+
+        {/* 3D Card */}
         <DigitalIdCard
           cardData={cardData}
           onRegenerateQr={handleRegenerateQr}
           regenerating={regenerating}
+          isFlipped={isFlipped}
+          onFlipChange={setIsFlipped}
         />
+
+        <p className="text-[11px] text-slate-500 font-medium text-center">
+          💡 Click or tap the card anywhere to flip between Front and Back sides.
+        </p>
       </div>
 
       {/* Security & Verification Details Section */}
@@ -140,7 +180,7 @@ export const DigitalIdPage = () => {
               <span>Public Verification Endpoint</span>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              When someone scans the QR code on your card with a smartphone camera, they are routed to the official BIT verification portal.
+              When security staff or attendees scan the dynamic QR code on the card, they are directed to the secure BIT registry verification page confirming your verified alumnus status.
             </p>
           </div>
 
@@ -161,10 +201,10 @@ export const DigitalIdPage = () => {
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
           <div className="flex items-center space-x-2 text-xs font-extrabold uppercase tracking-wider text-emerald-700">
             <ShieldCheck className="w-4 h-4" />
-            <span>Zero-PII Privacy Protection</span>
+            <span>Zero-PII Dynamic Token Security</span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Your QR code does not contain your phone number, home address, or personal data. It uses dynamic high-entropy tokens that can be rotated at any time if your credential is compromised.
+            Your QR code does not embed unencrypted personal data. If you share a screenshot or lose a badge, click <strong>"Regenerate QR Code"</strong> to instantly invalidate old verification tokens while keeping your permanent Alumni ID intact.
           </p>
         </div>
       </div>

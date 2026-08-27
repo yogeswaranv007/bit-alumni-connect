@@ -1,189 +1,314 @@
 import React, { useState } from 'react';
 import {
-  GraduationCap,
   RotateCw,
-  QrCode,
-  CheckCircle2,
-  Calendar,
-  Award,
-  Phone,
-  Mail,
-  MapPin,
-  Sparkles,
-  ShieldCheck
+  QrCode
 } from 'lucide-react';
+import { ALUMNI_ASSOCIATION_CONFIG } from '../../constants/alumniAssociation';
 
-export const DigitalIdCard = ({ cardData, onRegenerateQr, regenerating = false }) => {
-  const [isFlipped, setIsFlipped] = useState(false);
+/**
+ * Format raw date string (YYYY-MM-DD) into DD-MM-YYYY matching physical card
+ */
+const formatDateOfBirth = (dobString) => {
+  if (!dobString) return '11-11-2005';
+  try {
+    const parts = dobString.split('-');
+    if (parts.length === 3) {
+      // YYYY-MM-DD -> DD-MM-YYYY
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    const d = new Date(dobString);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+  } catch {
+    // fallback
+  }
+  return dobString;
+};
+
+export const DigitalIdCard = ({
+  cardData,
+  onRegenerateQr,
+  regenerating = false,
+  isFlipped: controlledFlipped,
+  onFlipChange,
+}) => {
+  const [internalFlipped, setInternalFlipped] = useState(false);
 
   if (!cardData) return null;
 
+  const isFlipped = controlledFlipped !== undefined ? controlledFlipped : internalFlipped;
+  const toggleFlip = () => {
+    const nextVal = !isFlipped;
+    if (onFlipChange) {
+      onFlipChange(nextVal);
+    } else {
+      setInternalFlipped(nextVal);
+    }
+  };
+
+  const batchText = `${cardData.batchStartYear || 2022} - ${cardData.batchEndYear || 2026}`;
+  const degreeAndDept = `${cardData.degree ? cardData.degree + ' ' : ''}${
+    cardData.departmentName ? cardData.departmentName.toUpperCase() : 'INFORMATION TECHNOLOGY'
+  }`;
+
+  const formattedDob = formatDateOfBirth(cardData.dateOfBirth);
+
   return (
-    <div className="flex flex-col items-center space-y-6">
-      {/* 3D Card Container */}
-      <div className="w-full max-w-[420px] h-[260px] sm:h-[270px] perspective-1000 cursor-pointer select-none">
+    <div className="flex flex-col items-center space-y-6 select-none">
+      {/* 3D Card Stage - Portrait CR80 Proportions (~340px x 540px) */}
+      <div className="w-[320px] sm:w-[348px] h-[510px] sm:h-[548px] perspective-1000 cursor-pointer">
         <div
-          onClick={() => setIsFlipped(!isFlipped)}
-          className={`relative w-full h-full duration-500 transform-style-preserve-3d transition-transform rounded-3xl shadow-2xl ${
+          onClick={toggleFlip}
+          aria-label="Click to flip ID card"
+          className={`relative w-full h-full duration-700 transform-style-preserve-3d transition-transform rounded-[24px] shadow-2xl ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
         >
           {/* ========================================================================= */}
-          {/* FRONT FACE                                                                */}
+          {/* FRONT SIDE (Physical BIT Alumni ID Design)                                */}
           {/* ========================================================================= */}
-          <div className="absolute inset-0 w-full h-full backface-hidden rounded-3xl p-5 sm:p-6 bg-gradient-to-br from-slate-900 via-bit-950 to-slate-900 text-white border border-bit-500/40 shadow-2xl flex flex-col justify-between overflow-hidden">
-            {/* Holographic Sheen Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-bit-400/10 pointer-events-none" />
-
-            {/* Header: Institution Branding */}
-            <div className="relative z-10 flex justify-between items-start border-b border-white/10 pb-3">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-bit-600 to-bit-400 flex items-center justify-center text-white font-extrabold text-xs shadow-sm">
-                  BIT
-                </div>
-                <div>
-                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-100 leading-tight">
-                    Bannari Amman Institute of Technology
-                  </h4>
-                  <p className="text-[9px] font-bold text-bit-300 uppercase tracking-widest">
-                    Official Virtual Alumni ID
-                  </p>
-                </div>
-              </div>
-
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                <CheckCircle2 className="w-2.5 h-2.5 mr-1" />
-                VERIFIED
+          <div className="absolute inset-0 w-full h-full backface-hidden rounded-[24px] bg-[#EB5323] text-slate-900 border-[1.5px] border-amber-600/30 shadow-2xl flex flex-col justify-between overflow-hidden">
+            {/* Right-side Deep Forest Green Vertical Batch Stripe */}
+            <div className="absolute top-0 right-0 bottom-0 w-[42px] sm:w-[46px] bg-[#006A38] rounded-r-[23px] flex flex-col items-center justify-center z-10 shadow-inner">
+              <span
+                style={{ writingMode: 'vertical-rl' }}
+                className="rotate-180 font-black text-white tracking-[0.25em] text-xs sm:text-sm font-sans"
+              >
+                {batchText}
               </span>
             </div>
 
-            {/* Body: Photo, Info, and Live QR Code */}
-            <div className="relative z-10 flex items-center justify-between gap-4 py-2">
-              {/* Left Column: Alumnus Details */}
-              <div className="flex items-center space-x-3.5 min-w-0">
-                {cardData.profilePhotoUrl ? (
-                  <img
-                    src={cardData.profilePhotoUrl}
-                    alt={cardData.fullName}
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-bit-400/50 shadow-md flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-bit-700 to-bit-500 text-white font-extrabold text-2xl flex items-center justify-center border-2 border-bit-400/50 shadow-md flex-shrink-0">
-                    {cardData.fullName?.charAt(0) || 'A'}
-                  </div>
-                )}
+            {/* Bottom Curved Green Wave */}
+            <div className="absolute bottom-0 left-0 right-[42px] sm:right-[46px] h-20 overflow-hidden pointer-events-none z-0">
+              <svg
+                viewBox="0 0 300 80"
+                preserveAspectRatio="none"
+                className="w-full h-full"
+                fill="none"
+              >
+                <path
+                  d="M0 45 C70 15, 180 75, 300 30 L300 80 L0 80 Z"
+                  fill="#006A38"
+                />
+              </svg>
+            </div>
 
-                <div className="space-y-0.5 min-w-0">
-                  <h3 className="font-extrabold text-sm sm:text-base text-white truncate tracking-tight">
-                    {cardData.fullName}
+            {/* Front Card Main Body (Left of Green Stripe) */}
+            <div className="relative z-10 flex-1 flex flex-col justify-between pr-[44px] sm:pr-[48px] pt-3 pb-2.5 pl-3.5">
+              {/* 1. Header: Official BIT Logo Image Asset */}
+              <div className="flex justify-center pt-0.5">
+                <img
+                  src="/logo/BIT_logo.jpg"
+                  alt="Bannari Amman Institute of Technology"
+                  className="h-16 sm:h-[72px] w-auto max-w-[210px] object-contain drop-shadow-xs rounded-xs"
+                />
+              </div>
+
+              {/* 2. Middle Section: Passport Photo & Register Number */}
+              <div className="flex flex-col items-center my-auto space-y-1.5 pt-1">
+                {/* Passport Size Photo Frame */}
+                <div className="relative w-[114px] h-[142px] sm:w-[124px] sm:h-[154px] rounded-xs bg-slate-100 border-[2.5px] border-white shadow-md overflow-hidden flex items-center justify-center">
+                  {cardData.profilePhotoUrl ? (
+                    <img
+                      src={cardData.profilePhotoUrl}
+                      alt={cardData.fullName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-tr from-amber-700 to-amber-900 text-white font-extrabold text-3xl flex items-center justify-center">
+                      {cardData.fullName?.charAt(0) || 'A'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Register Number */}
+                <div className="text-center">
+                  <span className="block text-[11px] sm:text-[12px] font-black tracking-wider text-slate-950 font-mono">
+                    {cardData.registerNumber || cardData.rollNumber || '7376221EC262'}
+                  </span>
+                </div>
+              </div>
+
+              {/* 3. Name & Degree/Department Section */}
+              <div className="space-y-1.5 pb-1">
+                {/* White Horizontal Full-Width Banner (Name) */}
+                <div className="-ml-3.5 mr-0 bg-white py-1 px-2 shadow-xs text-center border-y border-slate-200/60">
+                  <h3 className="font-black text-[13px] sm:text-[14.5px] text-slate-950 uppercase tracking-wide truncate">
+                    {cardData.fullName || 'ALUMNUS NAME'}
                   </h3>
-                  <p className="text-[11px] font-semibold text-bit-300 truncate">
-                    {cardData.degree} • {cardData.departmentCode}
-                  </p>
-                  <p className="text-[10px] font-mono text-slate-300 font-bold tracking-wider">
-                    {cardData.alumniIdCardNumber}
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-semibold">
-                    Class of {cardData.batchEndYear}
+                </div>
+
+                {/* Degree & Department (Bold Dark Text) */}
+                <div className="text-center px-1">
+                  <p className="text-[9.5px] sm:text-[10px] font-black text-slate-950 uppercase leading-tight tracking-tight">
+                    {degreeAndDept}
                   </p>
                 </div>
               </div>
 
-              {/* Right Column: Base64 Rendered QR Code */}
-              <div className="flex-shrink-0 flex flex-col items-center bg-white p-1.5 rounded-xl border border-white/20 shadow-inner">
-                {cardData.qrCodeBase64 ? (
-                  <img
-                    src={cardData.qrCodeBase64}
-                    alt="Verification QR"
-                    className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
-                  />
-                ) : (
-                  <QrCode className="w-16 h-16 text-slate-800" />
-                )}
-                <span className="text-[7px] font-extrabold text-slate-700 uppercase tracking-tighter mt-0.5">
-                  Scan to Verify
-                </span>
-              </div>
-            </div>
+              {/* 4. Bottom Row: Scannable Dynamic QR Code & Principal Signature */}
+              <div className="flex items-end justify-between pt-1 pb-0.5 px-0.5">
+                {/* Embedded Base64 Dynamic QR Code */}
+                <div className="flex flex-col items-center bg-white p-1 rounded-lg border border-slate-200 shadow-sm z-10">
+                  {cardData.qrCodeBase64 ? (
+                    <img
+                      src={cardData.qrCodeBase64}
+                      alt="Verification QR"
+                      className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
+                    />
+                  ) : (
+                    <QrCode className="w-12 h-12 text-slate-900" />
+                  )}
+                  <span className="text-[6.5px] font-black text-slate-900 uppercase tracking-tighter mt-0.5">
+                    Scan to Verify
+                  </span>
+                </div>
 
-            {/* Footer: Flip Instruction */}
-            <div className="relative z-10 flex justify-between items-center border-t border-white/10 pt-2 text-[9px] text-slate-400 font-medium">
-              <span>Lifetime Alumni Membership</span>
-              <span className="text-bit-300 font-bold flex items-center space-x-1">
-                <RotateCw className="w-2.5 h-2.5" />
-                <span>Click to Flip Card</span>
-              </span>
+                {/* Alumni ID & Principal Sign */}
+                <div className="flex flex-col items-end text-right z-10">
+                  <span className="text-[7.5px] font-mono font-extrabold text-amber-950 tracking-tight bg-amber-100/80 px-1.5 py-0.5 rounded-sm mb-1">
+                    {cardData.alumniIdCardNumber || 'BIT-ALU-ACTIVE'}
+                  </span>
+                  <div className="flex flex-col items-center">
+                    <svg
+                      viewBox="0 0 100 30"
+                      className="w-16 sm:w-20 h-6 object-contain overflow-visible"
+                      fill="none"
+                    >
+                      <path
+                        d="M5 20 C12 6, 20 2, 28 16 C32 24, 36 6, 44 12 C48 16, 52 8, 60 18 C66 26, 72 8, 80 16 M18 22 C35 20, 60 21, 92 18"
+                        stroke="#0F172A"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-900 mt-0.5">
+                      PRINCIPAL
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* ========================================================================= */}
-          {/* BACK FACE                                                                 */}
+          {/* BACK SIDE (Physical BIT Alumni ID Design)                                 */}
           {/* ========================================================================= */}
-          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl p-5 sm:p-6 bg-gradient-to-bl from-slate-900 via-slate-950 to-slate-900 text-white border border-slate-700 shadow-2xl flex flex-col justify-between overflow-hidden">
-            {/* Magnetic Stripe Bar */}
-            <div className="absolute top-4 left-0 right-0 h-8 bg-slate-950/90 border-y border-white/10" />
+          <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-[24px] bg-[#EB5323] text-slate-950 border-[1.5px] border-amber-600/30 shadow-2xl p-5 sm:p-6 flex flex-col justify-between overflow-hidden">
+            {/* Top Section: Personal & Contact Information */}
+            <div className="space-y-3 pt-2 text-slate-950">
+              {/* Blood Group */}
+              <div className="text-[12px] sm:text-[13px] font-black tracking-wide leading-tight">
+                <span className="inline-block w-20 text-slate-950">BG :</span>
+                <span className="font-extrabold">{cardData.bloodGroup || 'B+'}</span>
+              </div>
 
-            {/* Back Details Content */}
-            <div className="relative z-10 pt-10 space-y-2 text-xs">
-              <div className="grid grid-cols-2 gap-2 text-[10px]">
-                <div>
-                  <span className="text-slate-400 block font-semibold">Roll No:</span>
-                  <span className="font-mono font-bold text-slate-200">{cardData.rollNumber}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-semibold">Register No:</span>
-                  <span className="font-mono font-bold text-slate-200">{cardData.registerNumber}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-semibold">Blood Group:</span>
-                  <span className="font-bold text-slate-200">{cardData.bloodGroup || 'O+'}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-semibold">Date of Birth:</span>
-                  <span className="font-bold text-slate-200">{cardData.dateOfBirth || 'On File'}</span>
+              {/* Date of Birth */}
+              <div className="text-[12px] sm:text-[13px] font-black tracking-wide leading-tight">
+                <span className="inline-block w-20 text-slate-950">DOB :</span>
+                <span className="font-extrabold font-mono">{formattedDob}</span>
+              </div>
+
+              {/* Personal Email */}
+              <div className="text-[12px] sm:text-[13px] font-black tracking-wide leading-tight">
+                <span className="inline-block w-20 text-slate-950">E-Mail :</span>
+                <span className="font-bold text-[11px] sm:text-[12px] truncate max-w-[180px] inline-block align-bottom">
+                  {cardData.personalEmail || 'alumni@bitsathy.ac.in'}
+                </span>
+              </div>
+
+              {/* Address */}
+              <div className="text-[11.5px] sm:text-[12px] font-black tracking-wide leading-snug pt-1">
+                <span className="block text-slate-950 pb-0.5">Address :</span>
+                <div className="text-slate-900 font-extrabold text-[10.5px] sm:text-[11px] pl-1 space-y-0.5 uppercase">
+                  {cardData.permanentAddress ? (
+                    <>
+                      <p className="truncate">{cardData.permanentAddress}</p>
+                      {cardData.city && <p>{cardData.city}</p>}
+                      {(cardData.state || cardData.country) && (
+                        <p>{[cardData.state, cardData.country].filter(Boolean).join(', ')}</p>
+                      )}
+                      {cardData.postalCode && <p className="font-mono">{cardData.postalCode}</p>}
+                    </>
+                  ) : (
+                    <>
+                      <p>516 KUMBAKOTTAI MATHUR</p>
+                      <p>KALLAKURICHI</p>
+                      <p>TAMIL NADU</p>
+                      <p className="font-mono">606207</p>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className="text-[10px] pt-1">
-                <span className="text-slate-400 block font-semibold">Contact & Address:</span>
-                <span className="text-slate-300 block truncate">
-                  {cardData.permanentAddress || `${cardData.city || ''}, ${cardData.country || 'India'}`}
+              {/* Mobile Number */}
+              <div className="text-[12px] sm:text-[13px] font-black tracking-wide leading-tight pt-2">
+                <span className="text-slate-950">Mobile No : </span>
+                <span className="font-bold font-mono text-[12px] sm:text-[13px]">
+                  {cardData.phoneNumber || '9361009807'}
                 </span>
               </div>
             </div>
 
-            {/* Authorized Signature Line */}
-            <div className="relative z-10 flex justify-between items-end border-t border-white/10 pt-2">
-              <div className="text-[8px] text-slate-400 leading-tight max-w-[200px]">
-                Property of Bannari Amman Institute of Technology Alumni Association.
+            {/* Bottom Section: Alumni Association Details & Official Logo Badge */}
+            <div className="flex flex-col items-center space-y-2 pt-2 border-t border-amber-700/30">
+              {/* Official Alumni Association Badge Box */}
+              <div className="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-xs w-full max-w-[210px]">
+                <img
+                  src="/logo/alumni_association_bit_logo.jpg"
+                  alt="Alumni Association Bannari Amman Institute of Technology"
+                  className="h-16 sm:h-[70px] w-auto object-contain"
+                />
               </div>
-              <div className="text-right">
-                <p className="font-serif italic text-xs text-slate-300 leading-none">Secretary, BIT AA</p>
-                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Authorized Signatory</span>
+
+              {/* Association Contact Credentials */}
+              <div className="text-center text-slate-950 leading-tight space-y-0.5 pt-0.5">
+                <h4 className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-950">
+                  {ALUMNI_ASSOCIATION_CONFIG.name}
+                </h4>
+                <div className="text-[9px] sm:text-[9.5px] font-extrabold space-y-0.5 text-slate-900 pt-0.5">
+                  <p>
+                    Phone : <span className="font-mono">{ALUMNI_ASSOCIATION_CONFIG.phone}</span>
+                  </p>
+                  <p>
+                    Mobile : <span className="font-mono">{ALUMNI_ASSOCIATION_CONFIG.mobile}</span>
+                  </p>
+                  <p>
+                    E-mail : <span>{ALUMNI_ASSOCIATION_CONFIG.email}</span>
+                  </p>
+                  <p>
+                    Website : <span>{ALUMNI_ASSOCIATION_CONFIG.website}</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Action Bar */}
+      {/* Interactive Controls Bar */}
       <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
         <button
-          onClick={() => setIsFlipped(!isFlipped)}
-          className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs border border-slate-200 shadow-sm transition"
+          onClick={toggleFlip}
+          className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs border border-slate-300 shadow-sm transition active:scale-95"
         >
           <RotateCw className="w-3.5 h-3.5" />
-          <span>Flip Card ({isFlipped ? 'Show Front' : 'Show Back'})</span>
+          <span>Flip to {isFlipped ? 'Front Side' : 'Back Side'}</span>
         </button>
 
         {onRegenerateQr && (
           <button
             onClick={onRegenerateQr}
             disabled={regenerating}
-            className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-bit-700 hover:bg-bit-800 text-white font-bold text-xs shadow-sm transition disabled:opacity-50"
+            className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-[#006A38] hover:bg-[#00522B] text-white font-bold text-xs shadow-md transition disabled:opacity-50 active:scale-95"
           >
             <QrCode className="w-3.5 h-3.5" />
-            <span>{regenerating ? 'Rotating QR Token...' : 'Regenerate QR Code'}</span>
+            <span>{regenerating ? 'Rotating Token...' : 'Regenerate QR Code'}</span>
           </button>
         )}
       </div>

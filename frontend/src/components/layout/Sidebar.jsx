@@ -24,6 +24,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
   const adminLinks = [
     { name: 'Overview', path: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Alumni Verification', path: '/admin/alumni', icon: ShieldCheck },
+    { name: 'Change Requests', path: '/admin/change-requests', icon: FileText },
     { name: 'Alumni Directory', path: '/directory', icon: Users },
   ];
 

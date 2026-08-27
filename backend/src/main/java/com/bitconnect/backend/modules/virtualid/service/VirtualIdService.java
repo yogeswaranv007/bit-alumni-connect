@@ -6,6 +6,7 @@ import com.bitconnect.backend.modules.virtualid.dto.VirtualIdCardResponse;
 import com.bitconnect.backend.modules.virtualid.entity.VirtualAlumniId;
 import com.bitconnect.backend.modules.virtualid.entity.VirtualIdStatus;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -25,4 +26,26 @@ public interface VirtualIdService {
     VirtualIdCardResponse updateVirtualIdStatus(UUID virtualIdId, VirtualIdStatus status);
 
     PublicVerificationResponse verifyPublicToken(String token);
+
+    VirtualIdCardResponse generatePreview(
+            String fullName,
+            String profilePhotoUrl,
+            String departmentName,
+            String departmentCode,
+            String degree,
+            Integer batchStartYear,
+            Integer batchEndYear,
+            String rollNumber,
+            String registerNumber,
+            LocalDate dateOfBirth,
+            String bloodGroup,
+            String phoneNumber,
+            String personalEmail,
+            String permanentAddress,
+            String city,
+            String state,
+            String country,
+            String postalCode,
+            String alumniIdCardNumber
+    );
 }

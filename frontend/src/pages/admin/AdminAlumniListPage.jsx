@@ -5,6 +5,7 @@ import { alumniApi } from '../../api/alumniApi';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { Modal } from '../../components/common/Modal';
+import { DigitalIdCard } from '../../components/idcard/DigitalIdCard';
 import {
   ShieldCheck,
   Search,
@@ -47,6 +48,7 @@ export const AdminAlumniListPage = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [actionMessage, setActionMessage] = useState('');
+  const [modalTab, setModalTab] = useState('DETAILS'); // 'DETAILS' | 'ID_PREVIEW'
 
   const fetchDepartments = async () => {
     try {
@@ -403,73 +405,137 @@ export const AdminAlumniListPage = () => {
               </div>
             )}
 
-            {/* Profile Overview */}
-            <div className="flex items-start space-x-4 pb-4 border-b border-slate-100">
-              {selectedProfile.profilePhotoUrl ? (
-                <img
-                  src={selectedProfile.profilePhotoUrl}
-                  alt={selectedProfile.fullName}
-                  className="w-16 h-16 rounded-2xl object-cover border border-slate-200"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-2xl bg-bit-700 text-white font-extrabold text-2xl flex items-center justify-center">
-                  {selectedProfile.fullName?.charAt(0)}
-                </div>
-              )}
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-slate-900">{selectedProfile.fullName}</h3>
-                <p className="text-xs text-slate-500">{selectedProfile.accountEmail} • {selectedProfile.phoneNumber || 'No phone'}</p>
-                <div className="pt-1">
-                  <StatusBadge status={selectedProfile.verificationStatus} />
-                </div>
-              </div>
+            {/* Tab Navigation in Inspection Modal */}
+            <div className="flex items-center space-x-2 border-b border-slate-200 pb-2">
+              <button
+                type="button"
+                onClick={() => setModalTab('DETAILS')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
+                  modalTab === 'DETAILS'
+                    ? 'bg-bit-700 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Profile & Institutional Details
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalTab('ID_PREVIEW')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 ${
+                  modalTab === 'ID_PREVIEW'
+                    ? 'bg-bit-700 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>Proposed Digital ID Card Preview</span>
+              </button>
             </div>
 
-            {/* Academic Information Grid */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                Institutional Records
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-slate-400 block font-semibold">Roll Number</span>
-                  <span className="font-bold text-slate-800 font-mono">{selectedProfile.rollNumber}</span>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-slate-400 block font-semibold">Register Number</span>
-                  <span className="font-bold text-slate-800 font-mono">{selectedProfile.registerNumber}</span>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-slate-400 block font-semibold">Department</span>
-                  <span className="font-bold text-slate-800">{selectedProfile.department?.code}</span>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-slate-400 block font-semibold">Batch Years</span>
-                  <span className="font-bold text-slate-800">{selectedProfile.batchStartYear} - {selectedProfile.batchEndYear}</span>
+            {modalTab === 'ID_PREVIEW' ? (
+              <div className="space-y-4 text-center">
+                <span className="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                  ✨ Proposed Digital ID Card Preview (If Verified)
+                </span>
+                <div className="bg-slate-100 p-4 sm:p-6 rounded-2xl flex justify-center shadow-inner">
+                  <DigitalIdCard
+                    cardData={
+                      virtualIdInfo || {
+                        fullName: selectedProfile.fullName,
+                        profilePhotoUrl: selectedProfile.profilePhotoUrl,
+                        departmentName: selectedProfile.department?.name,
+                        departmentCode: selectedProfile.department?.code,
+                        degree: selectedProfile.degree,
+                        batchStartYear: selectedProfile.batchStartYear,
+                        batchEndYear: selectedProfile.batchEndYear,
+                        rollNumber: selectedProfile.rollNumber,
+                        registerNumber: selectedProfile.registerNumber,
+                        dateOfBirth: selectedProfile.dateOfBirth,
+                        bloodGroup: selectedProfile.bloodGroup,
+                        phoneNumber: selectedProfile.phoneNumber,
+                        personalEmail: selectedProfile.personalEmail || selectedProfile.accountEmail,
+                        permanentAddress: selectedProfile.permanentAddress,
+                        city: selectedProfile.city,
+                        state: selectedProfile.state,
+                        country: selectedProfile.country,
+                        postalCode: selectedProfile.postalCode,
+                        alumniIdCardNumber: `BIT-ALU-${selectedProfile.batchEndYear}-PREVIEW`,
+                      }
+                    }
+                  />
                 </div>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Profile Overview */}
+                <div className="flex items-start space-x-4 pb-4 border-b border-slate-100">
+                  {selectedProfile.profilePhotoUrl ? (
+                    <img
+                      src={selectedProfile.profilePhotoUrl}
+                      alt={selectedProfile.fullName}
+                      className="w-16 h-16 rounded-2xl object-cover border border-slate-200"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-bit-700 text-white font-extrabold text-2xl flex items-center justify-center">
+                      {selectedProfile.fullName?.charAt(0)}
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold text-slate-900">{selectedProfile.fullName}</h3>
+                    <p className="text-xs text-slate-500">{selectedProfile.accountEmail} • {selectedProfile.phoneNumber || 'No phone'}</p>
+                    <div className="pt-1">
+                      <StatusBadge status={selectedProfile.verificationStatus} />
+                    </div>
+                  </div>
+                </div>
 
-            {/* Personal & Physical ID Data */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                Personal & Physical Card Details
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-slate-400 block font-semibold">Date of Birth</span>
-                  <span className="font-bold text-slate-800">{selectedProfile.dateOfBirth || 'Not provided'}</span>
+                {/* Academic Information Grid */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                    Institutional Records
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span className="text-slate-400 block font-semibold">Roll Number</span>
+                      <span className="font-bold text-slate-800 font-mono">{selectedProfile.rollNumber}</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span className="text-slate-400 block font-semibold">Register Number</span>
+                      <span className="font-bold text-slate-800 font-mono">{selectedProfile.registerNumber}</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span className="text-slate-400 block font-semibold">Department</span>
+                      <span className="font-bold text-slate-800">{selectedProfile.department?.code}</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span className="text-slate-400 block font-semibold">Batch Years</span>
+                      <span className="font-bold text-slate-800">{selectedProfile.batchStartYear} - {selectedProfile.batchEndYear}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <span className="text-slate-400 block font-semibold">Blood Group</span>
-                  <span className="font-bold text-slate-800">{selectedProfile.bloodGroup || 'Not provided'}</span>
+
+                {/* Personal & Physical ID Data */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                    Personal & Physical Card Details
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span className="text-slate-400 block font-semibold">Date of Birth</span>
+                      <span className="font-bold text-slate-800">{selectedProfile.dateOfBirth || 'Not provided'}</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span className="text-slate-400 block font-semibold">Blood Group</span>
+                      <span className="font-bold text-slate-800">{selectedProfile.bloodGroup || 'Not provided'}</span>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 sm:col-span-2">
+                      <span className="text-slate-400 block font-semibold">Permanent Address</span>
+                      <span className="font-bold text-slate-800 truncate block">{selectedProfile.permanentAddress || 'Not provided'}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 sm:col-span-2">
-                  <span className="text-slate-400 block font-semibold">Permanent Address</span>
-                  <span className="font-bold text-slate-800 truncate block">{selectedProfile.permanentAddress || 'Not provided'}</span>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
 
             {/* Virtual ID Credentials (if verified) */}
             {virtualIdInfo && (

@@ -7,23 +7,37 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Official Bannari Amman Institute of Technology (BIT) Branding Palette
         bit: {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
-          700: '#0f766e',
-          800: '#115e59',
-          900: '#134e4a',
-          950: '#042f2e',
+          50: '#f0f4ff',
+          100: '#dbe4fe',
+          200: '#bfd0fd',
+          300: '#93b1fb',
+          400: '#608bf7',
+          500: '#3b65ef',
+          600: '#2548e3',
+          700: '#1b357d', // Primary Official BIT Royal Blue (Logo Omega Arch)
+          800: '#162a63', // Deep Institutional BIT Navy
+          900: '#121f47', // BIT Dark Navy
+          950: '#0a1129', // BIT Midnight
+        },
+        gold: {
+          50: '#fffdf2',
+          100: '#fef9c3',
+          200: '#feef8a',
+          300: '#fde047',
+          400: '#facc15',
+          500: '#eab308',
+          600: '#c59b27', // Official BIT Logo Inner Cube Gold
+          700: '#a17a16', // BIT Warm Gold Accent
+          800: '#854d0e',
+          900: '#713f12',
+          950: '#422006',
         },
         navy: {
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          800: '#162a63',
+          900: '#121f47',
+          950: '#0a1129',
         },
         amber: {
           400: '#fbbf24',

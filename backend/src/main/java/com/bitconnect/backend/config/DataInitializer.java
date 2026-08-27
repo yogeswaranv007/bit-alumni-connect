@@ -14,6 +14,7 @@ import com.bitconnect.backend.modules.virtualid.service.VirtualIdService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,8 +27,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Seeds required system roles, academic departments, and initial demo accounts
- * (Admin and Verified Alumnus) idempotently upon application startup.
+ * Seeds required system roles, academic departments, demo accounts,
+ * and ensures database column types support rich text and large Base64 images.
  */
 @Slf4j
 @Component
@@ -40,13 +41,36 @@ public class DataInitializer implements CommandLineRunner {
     private final AlumniProfileRepository alumniProfileRepository;
     private final VirtualIdService virtualIdService;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     @Transactional
     public void run(String... args) {
+        migrateColumnTypes();
         seedRoles();
         seedDepartments();
         seedDemoUsers();
+    }
+
+    private void migrateColumnTypes() {
+        try {
+            jdbcTemplate.execute("ALTER TABLE alumni_profiles ALTER COLUMN profile_photo_url TYPE TEXT");
+            jdbcTemplate.execute("ALTER TABLE alumni_profiles ALTER COLUMN permanent_address TYPE TEXT");
+            jdbcTemplate.execute("ALTER TABLE alumni_profiles ALTER COLUMN rejection_reason TYPE TEXT");
+            jdbcTemplate.execute("ALTER TABLE alumni_profiles ALTER COLUMN linkedin_url TYPE TEXT");
+            log.info("Migrated alumni_profiles columns to TEXT for large payload support");
+        } catch (Exception ex) {
+            log.debug("Column migration for alumni_profiles note: {}", ex.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE profile_change_requests ALTER COLUMN current_profile_snapshot TYPE TEXT");
+            jdbcTemplate.execute("ALTER TABLE profile_change_requests ALTER COLUMN requested_changes TYPE TEXT");
+            jdbcTemplate.execute("ALTER TABLE profile_change_requests ALTER COLUMN admin_comment TYPE TEXT");
+            log.info("Migrated profile_change_requests columns to TEXT");
+        } catch (Exception ex) {
+            log.debug("Column migration for profile_change_requests note: {}", ex.getMessage());
+        }
     }
 
     private void seedRoles() {

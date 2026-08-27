@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { alumniApi } from '../../api/alumniApi';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { PhotoUploader } from '../../components/common/PhotoUploader';
 import {
   GraduationCap,
   Building,
@@ -316,17 +317,10 @@ export const CreateProfilePage = () => {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Profile Photo URL
-              </label>
-              <input
-                type="url"
-                name="profilePhotoUrl"
-                placeholder="https://example.com/photo.jpg"
-                value={formData.profilePhotoUrl}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/20 focus:border-bit-600"
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-3">
+              <PhotoUploader
+                photoUrl={formData.profilePhotoUrl}
+                onPhotoChange={(url) => setFormData((prev) => ({ ...prev, profilePhotoUrl: url }))}
               />
             </div>
 
