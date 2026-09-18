@@ -16,6 +16,7 @@ public record AlumniProfileResponse(
         UUID userId,
         String fullName,
         String accountEmail,
+        String alumniIdNumber,
         DepartmentResponse department,
         String rollNumber,
         String registerNumber,
@@ -45,11 +46,16 @@ public record AlumniProfileResponse(
         Instant updatedAt
 ) {
     public static AlumniProfileResponse fromEntity(AlumniProfile profile) {
+        return fromEntity(profile, null);
+    }
+
+    public static AlumniProfileResponse fromEntity(AlumniProfile profile, String alumniIdNumber) {
         return new AlumniProfileResponse(
                 profile.getId(),
                 profile.getUser().getId(),
                 profile.getUser().getFullName(),
                 profile.getUser().getEmail(),
+                alumniIdNumber,
                 DepartmentResponse.fromEntity(profile.getDepartment()),
                 profile.getRollNumber(),
                 profile.getRegisterNumber(),

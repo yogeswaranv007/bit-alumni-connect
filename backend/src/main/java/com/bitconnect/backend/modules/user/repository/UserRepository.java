@@ -18,4 +18,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findWithRolesById(UUID id);
 
     boolean existsByEmail(String email);
+
+    @EntityGraph(attributePaths = {"roles"})
+    java.util.List<User> findByRolesName(com.bitconnect.backend.modules.user.entity.RoleName roleName);
 }

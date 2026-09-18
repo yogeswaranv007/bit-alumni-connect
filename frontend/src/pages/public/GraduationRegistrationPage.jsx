@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   GraduationCap,
   ExternalLink,
@@ -17,6 +18,7 @@ import SectionHeader from "../../components/community/SectionHeader";
 import { graduationResources } from "../../data/alumniData";
 
 const GraduationRegistrationPage = () => {
+  const { isAuthenticated, isAlumni } = useAuth();
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header Banner */}
@@ -104,16 +106,20 @@ const GraduationRegistrationPage = () => {
           {/* Integration with Digital Alumni ID */}
           <div className="p-6 rounded-2xl bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="space-y-1 text-center sm:text-left">
-              <h4 className="text-base font-bold text-white">Have you received your Digital Alumni ID?</h4>
+              <h4 className="text-base font-bold text-white">
+                {isAuthenticated ? 'Access Your 3D Digital Alumni ID' : 'Have you received your Digital Alumni ID?'}
+              </h4>
               <p className="text-xs text-slate-300">
-                Register on BIT Connect to generate your 3D Digital Alumni ID Card with cryptographic QR verification.
+                {isAuthenticated
+                  ? 'View, download, or present your cryptographically signed Digital Alumni ID Card.'
+                  : 'Register on BIT Connect to generate your 3D Digital Alumni ID Card with cryptographic QR verification.'}
               </p>
             </div>
             <Link
-              to="/register"
+              to={isAuthenticated ? (isAlumni() ? '/alumni/id-card' : '/admin/dashboard') : '/register'}
               className="px-5 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold text-xs shrink-0 transition-colors inline-flex items-center gap-1.5"
             >
-              <span>Get Digital ID</span>
+              <span>{isAuthenticated ? 'View Digital ID' : 'Get Digital ID'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

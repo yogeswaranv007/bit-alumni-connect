@@ -91,6 +91,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => hasRole('ROLE_ADMIN') || hasRole('ROLE_STAFF');
+  const isAdminOnly = () => hasRole('ROLE_ADMIN');
+  const isStaff = () => hasRole('ROLE_STAFF');
+  const isWatchman = () => hasRole('ROLE_WATCHMAN');
   const isAlumni = () => hasRole('ROLE_ALUMNI');
 
   return (
@@ -106,6 +109,9 @@ export const AuthProvider = ({ children }) => {
         refreshUser: fetchCurrentUser,
         hasRole,
         isAdmin,
+        isAdminOnly,
+        isStaff,
+        isWatchman,
         isAlumni,
       }}
     >

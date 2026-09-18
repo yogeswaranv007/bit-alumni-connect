@@ -312,6 +312,186 @@ export const DigitalIdCard = ({
           </button>
         )}
       </div>
+
+      {/* ========================================================================= */}
+      {/* Off-Screen Flat Export & Print Stage (Clean 2D, No 3D Perspective/Flip)   */}
+      {/* ========================================================================= */}
+      <div
+        id="bit-id-printable-stage"
+        className="fixed -left-[9999px] top-0 flex flex-row gap-6 p-4 bg-white z-0 pointer-events-none"
+        aria-hidden="true"
+      >
+        {/* Flat Front Card for Export */}
+        <div
+          id="bit-id-card-front-export"
+          style={{ width: '348px', height: '548px' }}
+          className="relative rounded-[24px] bg-[#EB5323] text-slate-900 border-[1.5px] border-amber-600/30 shadow-none flex flex-col justify-between overflow-hidden"
+        >
+          {/* Right-side Deep Forest Green Vertical Batch Stripe */}
+          <div className="absolute top-0 right-0 bottom-0 w-[46px] bg-[#006A38] rounded-r-[23px] flex flex-col items-center justify-center z-10 shadow-inner">
+            <span
+              style={{ writingMode: 'vertical-rl' }}
+              className="rotate-180 font-black text-white tracking-[0.25em] text-sm font-sans"
+            >
+              {batchText}
+            </span>
+          </div>
+
+          {/* Bottom Curved Green Wave */}
+          <div className="absolute bottom-0 left-0 right-[46px] h-20 overflow-hidden pointer-events-none z-0">
+            <svg viewBox="0 0 300 80" preserveAspectRatio="none" className="w-full h-full" fill="none">
+              <path d="M0 45 C70 15, 180 75, 300 30 L300 80 L0 80 Z" fill="#006A38" />
+            </svg>
+          </div>
+
+          {/* Front Card Main Body */}
+          <div className="relative z-10 flex-1 flex flex-col justify-between pr-[48px] pt-3 pb-2.5 pl-3.5">
+            <div className="flex justify-center pt-0.5">
+              <img
+                src="/logo/BIT_logo.jpg"
+                alt="Bannari Amman Institute of Technology"
+                className="h-[72px] w-auto max-w-[210px] object-contain drop-shadow-xs rounded-xs"
+              />
+            </div>
+
+            <div className="flex flex-col items-center my-auto space-y-1.5 pt-1">
+              <div className="relative w-[124px] h-[154px] rounded-xs bg-slate-100 border-[2.5px] border-white shadow-md overflow-hidden flex items-center justify-center">
+                {cardData.profilePhotoUrl ? (
+                  <img src={cardData.profilePhotoUrl} alt={cardData.fullName} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-tr from-amber-700 to-amber-900 text-white font-extrabold text-3xl flex items-center justify-center">
+                    {cardData.fullName?.charAt(0) || 'A'}
+                  </div>
+                )}
+              </div>
+              <div className="text-center">
+                <span className="block text-[12px] font-black tracking-wider text-slate-950 font-mono">
+                  {cardData.registerNumber || cardData.rollNumber || '7376221EC262'}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 pb-1">
+              <div className="-ml-3.5 mr-0 bg-white py-1 px-2 shadow-xs text-center border-y border-slate-200/60">
+                <h3 className="font-black text-[14.5px] text-slate-950 uppercase tracking-wide truncate">
+                  {cardData.fullName || 'ALUMNUS NAME'}
+                </h3>
+              </div>
+              <div className="text-center px-1">
+                <p className="text-[10px] font-black text-slate-950 uppercase leading-tight tracking-tight">
+                  {degreeAndDept}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-end justify-between pt-1 pb-0.5 px-0.5">
+              <div className="flex flex-col items-center bg-white p-1 rounded-lg border border-slate-200 shadow-sm z-10">
+                {cardData.qrCodeBase64 ? (
+                  <img src={cardData.qrCodeBase64} alt="Verification QR" className="w-14 h-14 object-contain" />
+                ) : (
+                  <QrCode className="w-12 h-12 text-slate-900" />
+                )}
+                <span className="text-[6.5px] font-black text-slate-900 uppercase tracking-tighter mt-0.5">
+                  Scan to Verify
+                </span>
+              </div>
+
+              <div className="flex flex-col items-end text-right z-10">
+                <span className="text-[7.5px] font-mono font-extrabold text-amber-950 tracking-tight bg-amber-100/80 px-1.5 py-0.5 rounded-sm mb-1">
+                  {cardData.alumniIdCardNumber || 'BIT-ALU-ACTIVE'}
+                </span>
+                <div className="flex flex-col items-center">
+                  <svg viewBox="0 0 100 30" className="w-20 h-6 object-contain overflow-visible" fill="none">
+                    <path
+                      d="M5 20 C12 6, 20 2, 28 16 C32 24, 36 6, 44 12 C48 16, 52 8, 60 18 C66 26, 72 8, 80 16 M18 22 C35 20, 60 21, 92 18"
+                      stroke="#0F172A"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-900 mt-0.5">
+                    PRINCIPAL
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Flat Back Card for Export */}
+        <div
+          id="bit-id-card-back-export"
+          style={{ width: '348px', height: '548px' }}
+          className="relative rounded-[24px] bg-[#EB5323] text-slate-950 border-[1.5px] border-amber-600/30 shadow-none p-6 flex flex-col justify-between overflow-hidden"
+        >
+          <div className="space-y-3 pt-2 text-slate-950">
+            <div className="text-[13px] font-black tracking-wide leading-tight">
+              <span className="inline-block w-20 text-slate-950">BG :</span>
+              <span className="font-extrabold">{cardData.bloodGroup || 'B+'}</span>
+            </div>
+            <div className="text-[13px] font-black tracking-wide leading-tight">
+              <span className="inline-block w-20 text-slate-950">DOB :</span>
+              <span className="font-extrabold font-mono">{formattedDob}</span>
+            </div>
+            <div className="text-[13px] font-black tracking-wide leading-tight">
+              <span className="inline-block w-20 text-slate-950">E-Mail :</span>
+              <span className="font-bold text-[12px] truncate max-w-[180px] inline-block align-bottom">
+                {cardData.personalEmail || 'alumni@bitsathy.ac.in'}
+              </span>
+            </div>
+            <div className="text-[12px] font-black tracking-wide leading-snug pt-1">
+              <span className="block text-slate-950 pb-0.5">Address :</span>
+              <div className="text-slate-900 font-extrabold text-[11px] pl-1 space-y-0.5 uppercase">
+                {cardData.permanentAddress ? (
+                  <>
+                    <p className="truncate">{cardData.permanentAddress}</p>
+                    {cardData.city && <p>{cardData.city}</p>}
+                    {(cardData.state || cardData.country) && (
+                      <p>{[cardData.state, cardData.country].filter(Boolean).join(', ')}</p>
+                    )}
+                    {cardData.postalCode && <p className="font-mono">{cardData.postalCode}</p>}
+                  </>
+                ) : (
+                  <>
+                    <p>516 KUMBAKOTTAI MATHUR</p>
+                    <p>KALLAKURICHI</p>
+                    <p>TAMIL NADU</p>
+                    <p className="font-mono">606207</p>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="text-[13px] font-black tracking-wide leading-tight pt-2">
+              <span className="text-slate-950">Mobile No : </span>
+              <span className="font-bold font-mono text-[13px]">
+                {cardData.phoneNumber || '9361009807'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center space-y-2 pt-2 border-t border-amber-700/30">
+            <div className="flex items-center justify-center p-1.5 bg-white rounded-xl shadow-xs w-full max-w-[210px]">
+              <img
+                src="/logo/alumni_association_bit_logo.jpg"
+                alt="Alumni Association Bannari Amman Institute of Technology"
+                className="h-[70px] w-auto object-contain"
+              />
+            </div>
+            <div className="text-center text-slate-950 leading-tight space-y-0.5 pt-0.5">
+              <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-950">
+                {ALUMNI_ASSOCIATION_CONFIG.name}
+              </h4>
+              <div className="text-[9.5px] font-extrabold space-y-0.5 text-slate-900 pt-0.5">
+                <p>Phone : <span className="font-mono">{ALUMNI_ASSOCIATION_CONFIG.phone}</span></p>
+                <p>Mobile : <span className="font-mono">{ALUMNI_ASSOCIATION_CONFIG.mobile}</span></p>
+                <p>E-mail : <span>{ALUMNI_ASSOCIATION_CONFIG.email}</span></p>
+                <p>Website : <span>{ALUMNI_ASSOCIATION_CONFIG.website}</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

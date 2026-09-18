@@ -1,7 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   ShieldCheck,
+  Shield,
   QrCode,
   Users,
   Award,
@@ -13,7 +15,9 @@ import {
   Image,
   CheckCircle2,
   ChevronRight,
-  GraduationCap
+  GraduationCap,
+  CreditCard,
+  LayoutDashboard
 } from "lucide-react";
 import StatCounter from "../../components/community/StatCounter";
 import ChapterCard from "../../components/community/ChapterCard";
@@ -30,6 +34,8 @@ import {
 } from "../../data/alumniData";
 
 const LandingPage = () => {
+  const { isAuthenticated, isAlumni, isAdmin, isStaff, isWatchman } = useAuth();
+
   const featuredChapters = alumniChapters.slice(0, 3);
   const featuredEvents = alumniEvents.slice(0, 3);
   const featuredAlumni = distinguishedAlumni.slice(0, 3);
@@ -68,20 +74,97 @@ const LandingPage = () => {
 
               {/* CTA Buttons */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
-                <Link
-                  to="/register"
-                  className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 hover:shadow-gold-500/40 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
-                >
-                  <span>Register as Alumni</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    {isAlumni() && (
+                      <>
+                        <Link
+                          to="/alumni/dashboard"
+                          className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 hover:shadow-gold-500/40 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-slate-950" />
+                          <span>Go to Dashboard</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                        <Link
+                          to="/alumni/virtual-id"
+                          className="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 font-semibold text-sm backdrop-blur-md hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
+                        >
+                          <CreditCard className="w-4 h-4 text-gold-400" />
+                          <span>My Digital ID</span>
+                        </Link>
+                      </>
+                    )}
 
-                <Link
-                  to="/login"
-                  className="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 font-semibold text-sm backdrop-blur-md hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  Alumni Login
-                </Link>
+                    {isAdmin() && (
+                      <>
+                        <Link
+                          to="/admin/dashboard"
+                          className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 hover:shadow-gold-500/40 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
+                        >
+                          <Shield className="w-4 h-4 text-slate-950" />
+                          <span>Admin Console</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                        <Link
+                          to="/admin/alumni"
+                          className="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 font-semibold text-sm backdrop-blur-md hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
+                        >
+                          <Users className="w-4 h-4 text-gold-400" />
+                          <span>Alumni Verification</span>
+                        </Link>
+                      </>
+                    )}
+
+                    {isStaff() && !isAdmin() && (
+                      <>
+                        <Link
+                          to="/faculty/campus-visits"
+                          className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 hover:shadow-gold-500/40 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
+                        >
+                          <Calendar className="w-4 h-4 text-slate-950" />
+                          <span>Faculty Approvals</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                        <Link
+                          to="/directory"
+                          className="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 font-semibold text-sm backdrop-blur-md hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
+                        >
+                          <Users className="w-4 h-4 text-gold-400" />
+                          <span>Alumni Directory</span>
+                        </Link>
+                      </>
+                    )}
+
+                    {isWatchman() && (
+                      <Link
+                        to="/watchman"
+                        className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 hover:shadow-gold-500/40 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
+                      >
+                        <QrCode className="w-4 h-4 text-slate-950" />
+                        <span>Gate Scanner Portal</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/register"
+                      className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 hover:shadow-gold-500/40 hover:-translate-y-0.5 transition-all duration-200 inline-flex items-center gap-2"
+                    >
+                      <span>Register as Alumni</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+
+                    <Link
+                      to="/login"
+                      className="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 font-semibold text-sm backdrop-blur-md hover:-translate-y-0.5 transition-all duration-200"
+                    >
+                      Alumni Login
+                    </Link>
+                  </>
+                )}
 
                 <Link
                   to="/alumni-association"
@@ -408,18 +491,91 @@ const LandingPage = () => {
           </p>
 
           <div className="pt-4 flex flex-wrap justify-center gap-4">
-            <Link
-              to="/register"
-              className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 transition-all"
-            >
-              Join BIT Connect
-            </Link>
-            <Link
-              to="/login"
-              className="px-8 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all"
-            >
-              Sign In to Your Account
-            </Link>
+            {isAuthenticated ? (
+              <>
+                {isAlumni() && (
+                  <>
+                    <Link
+                      to="/alumni/dashboard"
+                      className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 transition-all inline-flex items-center gap-2"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      <span>Go to Alumni Dashboard</span>
+                    </Link>
+                    <Link
+                      to="/directory"
+                      className="px-8 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all inline-flex items-center gap-2"
+                    >
+                      <Users className="w-4 h-4 text-gold-400" />
+                      <span>Explore Alumni Directory</span>
+                    </Link>
+                  </>
+                )}
+
+                {isAdmin() && (
+                  <>
+                    <Link
+                      to="/admin/dashboard"
+                      className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 transition-all inline-flex items-center gap-2"
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span>Open Admin Console</span>
+                    </Link>
+                    <Link
+                      to="/directory"
+                      className="px-8 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all inline-flex items-center gap-2"
+                    >
+                      <Users className="w-4 h-4 text-gold-400" />
+                      <span>Explore Alumni Directory</span>
+                    </Link>
+                  </>
+                )}
+
+                {isStaff() && !isAdmin() && (
+                  <>
+                    <Link
+                      to="/faculty/campus-visits"
+                      className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 transition-all inline-flex items-center gap-2"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      <span>Faculty Approvals</span>
+                    </Link>
+                    <Link
+                      to="/directory"
+                      className="px-8 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all inline-flex items-center gap-2"
+                    >
+                      <Users className="w-4 h-4 text-gold-400" />
+                      <span>Explore Alumni Directory</span>
+                    </Link>
+                  </>
+                )}
+
+                {isWatchman() && (
+                  <Link
+                    to="/watchman"
+                    className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 transition-all inline-flex items-center gap-2"
+                  >
+                    <QrCode className="w-4 h-4" />
+                    <span>Gate Scanner Portal</span>
+                  </Link>
+                )}
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/register"
+                  className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-xl shadow-gold-500/20 transition-all"
+                >
+                  Join BIT Connect
+                </Link>
+                <Link
+                  to="/login"
+                  className="px-8 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition-all"
+                >
+                  Sign In to Your Account
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>

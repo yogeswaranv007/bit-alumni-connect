@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   GraduationCap,
   Target,
@@ -13,13 +14,35 @@ import {
   Building,
   Mail,
   Phone,
-  CheckCircle
+  CheckCircle,
+  LayoutDashboard,
+  CreditCard
 } from "lucide-react";
 import SectionHeader from "../../components/community/SectionHeader";
 import StatCounter from "../../components/community/StatCounter";
 import { alumniAssociationInfo, alumniObjectives } from "../../data/alumniData";
 
 const AlumniAssociationPage = () => {
+  const { isAuthenticated, isAlumni, isAdmin, isStaff, isWatchman } = useAuth();
+
+  const getPrimaryCta = () => {
+    if (!isAuthenticated) {
+      return { to: '/register', label: 'Join BIT Connect', icon: ArrowRight };
+    }
+    if (isAdmin()) {
+      return { to: '/admin/dashboard', label: 'Go to Admin Console', icon: LayoutDashboard };
+    }
+    if (isStaff()) {
+      return { to: '/staff/dashboard', label: 'Go to Approvals', icon: LayoutDashboard };
+    }
+    if (isWatchman()) {
+      return { to: '/watchman/portal', label: 'Gate Scanner Portal', icon: LayoutDashboard };
+    }
+    return { to: '/alumni/dashboard', label: 'Go to Dashboard', icon: LayoutDashboard };
+  };
+
+  const primaryCta = getPrimaryCta();
+
   const welfareIcons = {
     HeartHandshake: HeartHandshake,
     GraduationCap: GraduationCap,
@@ -51,11 +74,11 @@ const AlumniAssociationPage = () => {
 
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
                 <Link
-                  to="/register"
+                  to={primaryCta.to}
                   className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-slate-950 font-bold text-sm shadow-lg shadow-gold-500/20 hover:shadow-gold-500/40 transition-all duration-200 inline-flex items-center gap-2"
                 >
-                  <span>Join BIT Connect</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>{primaryCta.label}</span>
+                  <primaryCta.icon className="w-4 h-4" />
                 </Link>
 
                 <Link
@@ -195,10 +218,10 @@ const AlumniAssociationPage = () => {
           </p>
           <div className="pt-2 flex flex-wrap justify-center gap-4">
             <Link
-              to="/register"
+              to={primaryCta.to}
               className="px-8 py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold text-sm shadow-xl transition-all"
             >
-              Register as Alumni
+              {isAuthenticated ? primaryCta.label : 'Register as Alumni'}
             </Link>
             <Link
               to="/chapters"
