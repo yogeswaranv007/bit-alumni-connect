@@ -26,4 +26,9 @@ public interface AlumniProfileRepository extends JpaRepository<AlumniProfile, UU
     boolean existsByRollNumber(String rollNumber);
 
     boolean existsByRegisterNumber(String registerNumber);
+
+    long countByVerificationStatus(com.bitconnect.backend.modules.alumni.entity.VerificationStatus status);
+
+    @EntityGraph(attributePaths = {"user", "department"})
+    java.util.List<AlumniProfile> findTop8ByVerificationStatusOrderByCreatedAtDesc(com.bitconnect.backend.modules.alumni.entity.VerificationStatus status);
 }

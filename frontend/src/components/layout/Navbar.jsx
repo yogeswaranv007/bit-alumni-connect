@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { AdminNotificationBell } from './AdminNotificationBell';
 import {
   GraduationCap,
   LogOut,
@@ -325,13 +326,16 @@ export const Navbar = ({ onToggleSidebar }) => {
                 )}
 
                 {isAdmin() && (
-                  <Link
-                    to="/admin/dashboard"
-                    className="text-xs font-bold text-bit-800 bg-bit-50 hover:bg-bit-100 px-3.5 py-2 rounded-xl border border-bit-200 transition flex items-center space-x-1.5 shadow-xs"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-bit-700" />
-                    <span>Admin Console</span>
-                  </Link>
+                  <div className="flex items-center space-x-2">
+                    <AdminNotificationBell />
+                    <Link
+                      to="/admin/dashboard"
+                      className="text-xs font-bold text-bit-800 bg-bit-50 hover:bg-bit-100 px-3.5 py-2 rounded-xl border border-bit-200 transition flex items-center space-x-1.5 shadow-xs"
+                    >
+                      <Shield className="w-3.5 h-3.5 text-bit-700" />
+                      <span>Admin Console</span>
+                    </Link>
+                  </div>
                 )}
 
                 {/* User Dropdown */}

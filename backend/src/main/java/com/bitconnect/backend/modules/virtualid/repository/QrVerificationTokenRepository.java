@@ -23,6 +23,14 @@ public interface QrVerificationTokenRepository extends JpaRepository<QrVerificat
     })
     Optional<QrVerificationToken> findByToken(String token);
 
+    @EntityGraph(attributePaths = {
+            "virtualAlumniId",
+            "virtualAlumniId.alumniProfile",
+            "virtualAlumniId.alumniProfile.user",
+            "virtualAlumniId.alumniProfile.department"
+    })
+    Optional<QrVerificationToken> findByTokenAndStatus(String token, TokenStatus status);
+
     @Query("SELECT t FROM QrVerificationToken t WHERE t.virtualAlumniId.id = :virtualIdId AND t.status = :status")
     Optional<QrVerificationToken> findActiveTokenByVirtualIdId(
             @Param("virtualIdId") UUID virtualIdId,

@@ -5,6 +5,15 @@ import com.bitconnect.backend.modules.alumni.entity.VerificationStatus;
 import com.bitconnect.backend.modules.alumni.repository.AlumniProfileRepository;
 import com.bitconnect.backend.modules.department.entity.Department;
 import com.bitconnect.backend.modules.department.repository.DepartmentRepository;
+import com.bitconnect.backend.modules.event.entity.Event;
+import com.bitconnect.backend.modules.event.entity.EventLocationType;
+import com.bitconnect.backend.modules.event.entity.EventType;
+import com.bitconnect.backend.modules.event.repository.EventRepository;
+import com.bitconnect.backend.modules.rfid.entity.RfidIdentityMapping;
+import com.bitconnect.backend.modules.rfid.entity.RfidStatus;
+import com.bitconnect.backend.modules.rfid.repository.RfidIdentityMappingRepository;
+import com.bitconnect.backend.modules.staff.entity.StaffProfile;
+import com.bitconnect.backend.modules.staff.repository.StaffProfileRepository;
 import com.bitconnect.backend.modules.user.entity.Role;
 import com.bitconnect.backend.modules.user.entity.RoleName;
 import com.bitconnect.backend.modules.user.entity.User;
@@ -21,14 +30,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Seeds required system roles, academic departments, demo accounts,
- * and ensures database column types support rich text and large Base64 images.
+ * Seeds required system roles, academic departments, development test accounts,
+ * sample events, and ensures database column types support rich text.
  */
 @Slf4j
 @Component
@@ -39,6 +49,9 @@ public class DataInitializer implements CommandLineRunner {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
     private final AlumniProfileRepository alumniProfileRepository;
+    private final StaffProfileRepository staffProfileRepository;
+    private final EventRepository eventRepository;
+    private final RfidIdentityMappingRepository rfidRepository;
     private final VirtualIdService virtualIdService;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
@@ -50,6 +63,7 @@ public class DataInitializer implements CommandLineRunner {
         seedRoles();
         seedDepartments();
         seedDemoUsers();
+        seedSampleEvents();
     }
 
     private void migrateColumnTypes() {
@@ -70,6 +84,13 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Migrated profile_change_requests columns to TEXT");
         } catch (Exception ex) {
             log.debug("Column migration for profile_change_requests note: {}", ex.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE roles DROP CONSTRAINT IF EXISTS roles_name_check");
+            log.info("Dropped legacy roles_name_check constraint if present");
+        } catch (Exception ex) {
+            log.debug("Role constraint migration note: {}", ex.getMessage());
         }
     }
 
@@ -111,8 +132,10 @@ public class DataInitializer implements CommandLineRunner {
     private void seedDemoUsers() {
         Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN).orElseThrow();
         Role alumniRole = roleRepository.findByName(RoleName.ROLE_ALUMNI).orElseThrow();
+        Role staffRole = roleRepository.findByName(RoleName.ROLE_STAFF).orElseThrow();
+        Role watchmanRole = roleRepository.findByName(RoleName.ROLE_WATCHMAN).orElseThrow();
 
-        // 1. Seed Demo Administrator (admin@bitsathy.ac.in / Password@123)
+        // 1. Seed Development Administrator (admin@bitsathy.ac.in / Password@123)
         if (!userRepository.existsByEmail("admin@bitsathy.ac.in")) {
             User adminUser = User.builder()
                     .email("admin@bitsathy.ac.in")
@@ -122,10 +145,46 @@ public class DataInitializer implements CommandLineRunner {
                     .roles(new HashSet<>(Set.of(adminRole)))
                     .build();
             userRepository.save(adminUser);
-            log.info("Initialized demo admin user: admin@bitsathy.ac.in");
+            log.info("Initialized dev admin user: admin@bitsathy.ac.in");
         }
 
-        // 2. Seed Demo Verified Alumnus (alumni@bitsathy.ac.in / Password@123)
+        // 2. Seed Development Gate Watchman (watchman@bitsathy.ac.in / Password@123)
+        if (!userRepository.existsByEmail("watchman@bitsathy.ac.in")) {
+            User watchmanUser = User.builder()
+                    .email("watchman@bitsathy.ac.in")
+                    .fullName("Main Gate Security Watchman")
+                    .password(passwordEncoder.encode("Password@123"))
+                    .isActive(true)
+                    .roles(new HashSet<>(Set.of(watchmanRole)))
+                    .build();
+            userRepository.save(watchmanUser);
+            log.info("Initialized dev watchman user: watchman@bitsathy.ac.in");
+        }
+
+        // 3. Seed Development IT Faculty Member (faculty.it@bitsathy.ac.in / Password@123)
+        if (!userRepository.existsByEmail("faculty.it@bitsathy.ac.in")) {
+            Department itDept = departmentRepository.findByCode("IT").orElseThrow();
+            User facultyUser = User.builder()
+                    .email("faculty.it@bitsathy.ac.in")
+                    .fullName("Dr. Suresh Kumar")
+                    .password(passwordEncoder.encode("Password@123"))
+                    .isActive(true)
+                    .roles(new HashSet<>(Set.of(staffRole)))
+                    .build();
+            User savedFaculty = userRepository.save(facultyUser);
+
+            StaffProfile staffProfile = StaffProfile.builder()
+                    .user(savedFaculty)
+                    .department(itDept)
+                    .staffCode("BIT-STF-IT-001")
+                    .designation("Professor & Head, Department of IT")
+                    .phoneNumber("+91 94433 12345")
+                    .build();
+            staffProfileRepository.save(staffProfile);
+            log.info("Initialized dev faculty user: faculty.it@bitsathy.ac.in");
+        }
+
+        // 4. Seed Development Verified Alumnus (alumni@bitsathy.ac.in / Password@123)
         if (!userRepository.existsByEmail("alumni@bitsathy.ac.in")) {
             User alumniUser = User.builder()
                     .email("alumni@bitsathy.ac.in")
@@ -135,9 +194,7 @@ public class DataInitializer implements CommandLineRunner {
                     .roles(new HashSet<>(Set.of(alumniRole)))
                     .build();
             User savedAlumni = userRepository.save(alumniUser);
-            log.info("Initialized demo alumnus user: alumni@bitsathy.ac.in");
 
-            // Seed associated verified profile and Virtual ID
             Department itDept = departmentRepository.findByCode("IT").orElseThrow();
             AlumniProfile profile = AlumniProfile.builder()
                     .user(savedAlumni)
@@ -168,7 +225,68 @@ public class DataInitializer implements CommandLineRunner {
 
             AlumniProfile savedProfile = alumniProfileRepository.save(profile);
             virtualIdService.issueVirtualId(savedProfile);
-            log.info("Initialized demo verified Alumni Profile & Virtual ID for: alumni@bitsathy.ac.in");
+
+            // Seed sample RFID mapping for demo alumnus
+            RfidIdentityMapping rfidMapping = RfidIdentityMapping.builder()
+                    .alumniProfile(savedProfile)
+                    .rfidUid("RFID-BIT-DEMO-001")
+                    .cardNumber("NFC-2024-001")
+                    .status(RfidStatus.ACTIVE)
+                    .issuedDate(LocalDate.now())
+                    .notes("Primary RFID physical card")
+                    .build();
+            rfidRepository.save(rfidMapping);
+
+            log.info("Initialized dev verified Alumni Profile, Virtual ID & RFID for: alumni@bitsathy.ac.in");
+        }
+    }
+
+    private void seedSampleEvents() {
+        if (eventRepository.count() == 0) {
+            Department itDept = departmentRepository.findByCode("IT").orElse(null);
+
+            Event event1 = Event.builder()
+                    .title("IT Department Faculty Interaction & Mentorship")
+                    .eventType(EventType.FACULTY_MEETING)
+                    .locationType(EventLocationType.ON_CAMPUS)
+                    .venue("IT Block - Conference Hall 204")
+                    .eventDate(LocalDate.now())
+                    .startTime(LocalTime.of(10, 30))
+                    .endTime(LocalTime.of(11, 30))
+                    .department(itDept)
+                    .organizer("Dr. Suresh Kumar (HOD IT)")
+                    .description("One-on-one academic interaction and student mentorship discussion.")
+                    .isActive(true)
+                    .build();
+
+            Event event2 = Event.builder()
+                    .title("Alumni Association General Body Meet")
+                    .eventType(EventType.ALUMNI_MEET)
+                    .locationType(EventLocationType.ON_CAMPUS)
+                    .venue("Alumni Centre, Main Block")
+                    .eventDate(LocalDate.now())
+                    .startTime(LocalTime.of(12, 0))
+                    .endTime(LocalTime.of(13, 30))
+                    .organizer("BIT Alumni Association")
+                    .description("Quarterly general meet discussing scholarship and incubator funding.")
+                    .isActive(true)
+                    .build();
+
+            Event event3 = Event.builder()
+                    .title("Chennai Regional Alumni Chapter Meet")
+                    .eventType(EventType.ALUMNI_MEET)
+                    .locationType(EventLocationType.OFF_CAMPUS)
+                    .venue("ITC Grand Chola, Guindy, Chennai")
+                    .eventDate(LocalDate.now().plusDays(15))
+                    .startTime(LocalTime.of(18, 0))
+                    .endTime(LocalTime.of(21, 0))
+                    .organizer("Chennai Chapter Council")
+                    .description("Networking dinner and alumni entrepreneurship roundtable.")
+                    .isActive(true)
+                    .build();
+
+            eventRepository.saveAll(List.of(event1, event2, event3));
+            log.info("Seeded canonical sample on-campus and off-campus events");
         }
     }
 }

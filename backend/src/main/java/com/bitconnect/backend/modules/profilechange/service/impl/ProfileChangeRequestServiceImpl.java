@@ -7,6 +7,7 @@ import com.bitconnect.backend.common.response.PagedResponse;
 import com.bitconnect.backend.modules.alumni.entity.AlumniProfile;
 import com.bitconnect.backend.modules.alumni.entity.VerificationStatus;
 import com.bitconnect.backend.modules.alumni.repository.AlumniProfileRepository;
+import com.bitconnect.backend.modules.alumni.util.DepartmentCodeValidator;
 import com.bitconnect.backend.modules.department.entity.Department;
 import com.bitconnect.backend.modules.department.repository.DepartmentRepository;
 import com.bitconnect.backend.modules.profilechange.dto.AdminProfileChangeRequestDetailResponse;
@@ -82,6 +83,8 @@ public class ProfileChangeRequestServiceImpl implements ProfileChangeRequestServ
         if (requestedChanges.isEmpty()) {
             throw new BadRequestException("No modified profile fields detected. Please change at least one field before submitting a change request.");
         }
+
+        validateChangeRequestDepartmentMatch(profile, requestedChanges);
 
         ProfileChangeRequest changeRequest = ProfileChangeRequest.builder()
                 .alumniProfile(profile)
@@ -165,6 +168,8 @@ public class ProfileChangeRequestServiceImpl implements ProfileChangeRequestServ
         if (requestedChanges.isEmpty()) {
             throw new BadRequestException("No modified profile fields detected. Please update at least one field.");
         }
+
+        validateChangeRequestDepartmentMatch(profile, requestedChanges);
 
         changeRequest.setRequestedChanges(toJson(requestedChanges));
         ProfileChangeRequest saved = changeRequestRepository.save(changeRequest);
@@ -464,6 +469,26 @@ public class ProfileChangeRequestServiceImpl implements ProfileChangeRequestServ
         }
 
         return changes;
+    }
+
+    private void validateChangeRequestDepartmentMatch(AlumniProfile profile, Map<String, Object> changes) {
+        Department targetDept = profile.getDepartment();
+        if (changes.containsKey("departmentId") && changes.get("departmentId") != null) {
+            try {
+                Integer deptId = ((Number) changes.get("departmentId")).intValue();
+                targetDept = departmentRepository.findById(deptId).orElse(targetDept);
+            } catch (Exception ignored) {}
+        }
+
+        String effectiveRegNo = changes.containsKey("registerNumber")
+                ? (String) changes.get("registerNumber")
+                : profile.getRegisterNumber();
+
+        String effectiveRollNo = changes.containsKey("rollNumber")
+                ? (String) changes.get("rollNumber")
+                : profile.getRollNumber();
+
+        DepartmentCodeValidator.validateDepartmentMatch(targetDept, effectiveRegNo, effectiveRollNo);
     }
 
     private void applyChangesToProfile(AlumniProfile profile, Map<String, Object> changes) {

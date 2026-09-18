@@ -29,4 +29,9 @@ public interface ProfileChangeRequestRepository extends JpaRepository<ProfileCha
 
     @Query("SELECT r FROM ProfileChangeRequest r JOIN FETCH r.alumniProfile p JOIN FETCH p.user JOIN FETCH p.department WHERE r.id = :id")
     Optional<ProfileChangeRequest> findByIdWithDetails(@Param("id") UUID id);
+
+    long countByStatus(ChangeRequestStatus status);
+
+    @Query("SELECT r FROM ProfileChangeRequest r JOIN FETCH r.alumniProfile p JOIN FETCH p.user WHERE r.status = :status ORDER BY r.createdAt DESC")
+    List<ProfileChangeRequest> findTop8ByStatusOrderByCreatedAtDesc(@Param("status") ChangeRequestStatus status);
 }

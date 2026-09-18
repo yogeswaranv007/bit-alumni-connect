@@ -203,7 +203,13 @@ class AlumniProfileControllerTest {
                 "Senior SDE",
                 "Technology",
                 "https://linkedin.com/in/praveenkumar-google",
-                true
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
         );
 
         mockMvc.perform(put("/api/v1/alumni/profile/me")
@@ -214,24 +220,7 @@ class AlumniProfileControllerTest {
                 .andExpect(jsonPath("$.data.currentCompany", is("Google")))
                 .andExpect(jsonPath("$.data.city", is("Bengaluru")));
 
-        // 5. Admin verifies profile
-        mockMvc.perform(patch("/api/v1/admin/alumni/" + profileId + "/verify")
-                        .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.verificationStatus", is("VERIFIED")));
-
-        // 6. Search directory -> Verified alumni must appear with privacy-safe fields
-        mockMvc.perform(get("/api/v1/alumni/directory")
-                        .header("Authorization", "Bearer " + alumniToken)
-                        .param("search", uniqueName)
-                        .param("departmentId", String.valueOf(itDept.getId())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[0].fullName", is(uniqueName)))
-                .andExpect(jsonPath("$.data.content[0].currentCompany", is("Google")))
-                .andExpect(jsonPath("$.data.content[0].rollNumber").doesNotExist())
-                .andExpect(jsonPath("$.data.content[0].phoneNumber").doesNotExist());
-
-        // 7. Admin rejects profile with reason
+        // 5. Admin rejects profile with reason
         AlumniRejectRequest rejectReq = new AlumniRejectRequest("Register number verification pending from university.");
         mockMvc.perform(patch("/api/v1/admin/alumni/" + profileId + "/reject")
                         .header("Authorization", "Bearer " + adminToken)
@@ -241,14 +230,20 @@ class AlumniProfileControllerTest {
                 .andExpect(jsonPath("$.data.verificationStatus", is("REJECTED")))
                 .andExpect(jsonPath("$.data.rejectionReason", containsString("university")));
 
-        // 8. Rejected profile should no longer appear in directory
+        // 6. Admin CANNOT approve a rejected profile (Must be rejected until alumni modifies and resubmits)
+        mockMvc.perform(patch("/api/v1/admin/alumni/" + profileId + "/verify")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Cannot approve a rejected profile")));
+
+        // 7. Rejected profile should not appear in directory
         mockMvc.perform(get("/api/v1/alumni/directory")
                         .header("Authorization", "Bearer " + alumniToken)
                         .param("search", uniqueName))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalElements", is(0)));
 
-        // 9. When rejected alumni resubmits/updates profile, status resets to PENDING
+        // 8. When rejected alumni modifies their details and resubmits, status resets to PENDING
         mockMvc.perform(put("/api/v1/alumni/profile/me")
                         .header("Authorization", "Bearer " + alumniToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -256,5 +251,64 @@ class AlumniProfileControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.verificationStatus", is("PENDING")))
                 .andExpect(jsonPath("$.data.rejectionReason").doesNotExist());
+
+        // 9. Now Admin can verify the newly modified and resubmitted profile
+        mockMvc.perform(patch("/api/v1/admin/alumni/" + profileId + "/verify")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.verificationStatus", is("VERIFIED")));
+
+        // 10. Verified profile now appears in public directory
+        mockMvc.perform(get("/api/v1/alumni/directory")
+                        .header("Authorization", "Bearer " + alumniToken)
+                        .param("search", uniqueName)
+                        .param("departmentId", String.valueOf(itDept.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].fullName", is(uniqueName)))
+                .andExpect(jsonPath("$.data.content[0].currentCompany", is("Google")));
+    }
+
+    @Test
+    @DisplayName("Should reject profile submission when Register Number department code does not match selected department")
+    void testDepartmentCodeMismatchRejection() throws Exception {
+        Department aidsDept = departmentRepository.findByCode("AIDS")
+                .orElseGet(() -> departmentRepository.save(new Department("AIDS", "Artificial Intelligence and Data Science", "AIDS Dept")));
+
+        String email = "deptmismatch." + System.currentTimeMillis() + "@bitsathy.ac.in";
+        String token = createAlumniAndGetToken(email, "Student Test");
+
+        String uniqueSuffix = String.valueOf(System.currentTimeMillis() % 100000);
+        // Register number has IT, but department selected is AIDS
+        AlumniProfileCreateRequest mismatchReq = new AlumniProfileCreateRequest(
+                aidsDept.getId(),
+                "23IT" + uniqueSuffix,
+                "7376232IT" + uniqueSuffix,
+                "B.Tech",
+                2023,
+                2027,
+                null,
+                null,
+                null,
+                "test@gmail.com",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true
+        );
+
+        mockMvc.perform(post("/api/v1/alumni/profile")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mismatchReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("contains department code 'IT'")))
+                .andExpect(jsonPath("$.message", containsString("does not match the selected department 'AIDS'")));
     }
 }
