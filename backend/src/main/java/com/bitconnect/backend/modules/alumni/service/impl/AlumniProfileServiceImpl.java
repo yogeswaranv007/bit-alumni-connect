@@ -16,6 +16,8 @@ import com.bitconnect.backend.modules.department.entity.Department;
 import com.bitconnect.backend.modules.department.repository.DepartmentRepository;
 import com.bitconnect.backend.modules.user.entity.User;
 import com.bitconnect.backend.modules.user.repository.UserRepository;
+import com.bitconnect.backend.modules.virtualid.entity.VirtualAlumniId;
+import com.bitconnect.backend.modules.virtualid.repository.VirtualAlumniIdRepository;
 import com.bitconnect.backend.modules.virtualid.service.VirtualIdService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,15 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final VirtualIdService virtualIdService;
+    private final VirtualAlumniIdRepository virtualAlumniIdRepository;
+
+    private AlumniProfileResponse toProfileResponse(AlumniProfile profile) {
+        if (profile == null) return null;
+        String alumniId = virtualAlumniIdRepository.findByAlumniProfileId(profile.getId())
+                .map(VirtualAlumniId::getAlumniIdCardNumber)
+                .orElse(null);
+        return AlumniProfileResponse.fromEntity(profile, alumniId);
+    }
 
     @Override
     @Transactional
@@ -49,21 +60,25 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
             throw new BadRequestException("Alumni profile already exists for this user");
         }
 
+        Department department = departmentRepository.findById(request.departmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Department", "id", request.departmentId()));
+
         String rollNumber = request.rollNumber().trim().toUpperCase();
+        String registerNumber = request.registerNumber().trim().toUpperCase();
+
+        // Validate that registerNumber and rollNumber department abbreviations match selected department
+        com.bitconnect.backend.modules.alumni.util.DepartmentCodeValidator.validateDepartmentMatch(department, registerNumber, rollNumber);
+
         if (alumniProfileRepository.existsByRollNumber(rollNumber)) {
             throw new BadRequestException("Roll number is already registered: " + rollNumber);
         }
 
-        String registerNumber = request.registerNumber().trim().toUpperCase();
         if (alumniProfileRepository.existsByRegisterNumber(registerNumber)) {
             throw new BadRequestException("Register number is already registered: " + registerNumber);
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
-
-        Department department = departmentRepository.findById(request.departmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Department", "id", request.departmentId()));
 
         AlumniProfile profile = AlumniProfile.builder()
                 .user(user)
@@ -94,7 +109,7 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
         AlumniProfile savedProfile = alumniProfileRepository.save(profile);
         log.info("Alumni profile created with ID: {} for user: {}", savedProfile.getId(), user.getEmail());
 
-        return AlumniProfileResponse.fromEntity(savedProfile);
+        return toProfileResponse(savedProfile);
     }
 
     @Override
@@ -102,7 +117,7 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
     public AlumniProfileResponse getMyProfile(UUID userId) {
         AlumniProfile profile = alumniProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Alumni profile not found for this user"));
-        return AlumniProfileResponse.fromEntity(profile);
+        return toProfileResponse(profile);
     }
 
     @Override
@@ -115,6 +130,46 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
         if (profile.getVerificationStatus() == VerificationStatus.VERIFIED) {
             throw new BadRequestException("Official profile details cannot be modified directly once verified. Please submit a Profile Change Request to request changes for administrator review.");
         }
+
+        if (request.departmentId() != null && !request.departmentId().equals(profile.getDepartment().getId())) {
+            Department dept = departmentRepository.findById(request.departmentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Department", "id", request.departmentId()));
+            profile.setDepartment(dept);
+        }
+        if (request.rollNumber() != null && !request.rollNumber().trim().isEmpty()) {
+            String newRoll = request.rollNumber().trim().toUpperCase();
+            if (!newRoll.equalsIgnoreCase(profile.getRollNumber())) {
+                if (alumniProfileRepository.existsByRollNumber(newRoll)) {
+                    throw new BadRequestException("Roll number is already registered: " + newRoll);
+                }
+                profile.setRollNumber(newRoll);
+            }
+        }
+        if (request.registerNumber() != null && !request.registerNumber().trim().isEmpty()) {
+            String newReg = request.registerNumber().trim().toUpperCase();
+            if (!newReg.equalsIgnoreCase(profile.getRegisterNumber())) {
+                if (alumniProfileRepository.existsByRegisterNumber(newReg)) {
+                    throw new BadRequestException("Register number is already registered: " + newReg);
+                }
+                profile.setRegisterNumber(newReg);
+            }
+        }
+        if (request.degree() != null && !request.degree().trim().isEmpty()) {
+            profile.setDegree(request.degree().trim());
+        }
+        if (request.batchStartYear() != null) {
+            profile.setBatchStartYear(request.batchStartYear());
+        }
+        if (request.batchEndYear() != null) {
+            profile.setBatchEndYear(request.batchEndYear());
+        }
+
+        // Validate that registerNumber and rollNumber department abbreviations match the profile's department
+        com.bitconnect.backend.modules.alumni.util.DepartmentCodeValidator.validateDepartmentMatch(
+                profile.getDepartment(),
+                profile.getRegisterNumber(),
+                profile.getRollNumber()
+        );
 
         if (request.profilePhotoUrl() != null) {
             profile.setProfilePhotoUrl(request.profilePhotoUrl());
@@ -172,7 +227,7 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
         }
 
         AlumniProfile updatedProfile = alumniProfileRepository.save(profile);
-        return AlumniProfileResponse.fromEntity(updatedProfile);
+        return toProfileResponse(updatedProfile);
     }
 
     @Override
@@ -241,7 +296,7 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
         };
 
         Page<AlumniProfile> page = alumniProfileRepository.findAll(spec, pageable);
-        return PagedResponse.from(page.map(AlumniProfileResponse::fromEntity));
+        return PagedResponse.from(page.map(this::toProfileResponse));
     }
 
     @Override
@@ -249,7 +304,7 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
     public AlumniProfileResponse getProfileById(UUID id) {
         AlumniProfile profile = alumniProfileRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Alumni profile", "id", id));
-        return AlumniProfileResponse.fromEntity(profile);
+        return toProfileResponse(profile);
     }
 
     @Override
@@ -257,6 +312,13 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
     public AlumniProfileResponse verifyProfile(UUID id, UUID adminId) {
         AlumniProfile profile = alumniProfileRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Alumni profile", "id", id));
+
+        if (profile.getVerificationStatus() == VerificationStatus.REJECTED) {
+            throw new BadRequestException("Cannot approve a rejected profile. The alumnus must modify their details and resubmit the verification request first.");
+        }
+        if (profile.getVerificationStatus() == VerificationStatus.VERIFIED) {
+            throw new BadRequestException("Alumni profile is already verified.");
+        }
 
         profile.setVerificationStatus(VerificationStatus.VERIFIED);
         profile.setVerifiedBy(adminId);
@@ -269,7 +331,7 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
         // Automatically issue Virtual Alumni ID upon verification
         virtualIdService.issueVirtualId(verifiedProfile);
 
-        return AlumniProfileResponse.fromEntity(verifiedProfile);
+        return toProfileResponse(verifiedProfile);
     }
 
     @Override
@@ -278,6 +340,10 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
         AlumniProfile profile = alumniProfileRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Alumni profile", "id", id));
 
+        if (profile.getVerificationStatus() == VerificationStatus.VERIFIED) {
+            throw new BadRequestException("Cannot reject an already verified profile. Suspend the user account or revoke virtual ID instead.");
+        }
+
         profile.setVerificationStatus(VerificationStatus.REJECTED);
         profile.setVerifiedBy(adminId);
         profile.setVerifiedAt(Instant.now());
@@ -285,6 +351,6 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
 
         AlumniProfile rejectedProfile = alumniProfileRepository.save(profile);
         log.info("Alumni profile ID: {} rejected by admin ID: {} with reason: {}", id, adminId, request.reason());
-        return AlumniProfileResponse.fromEntity(rejectedProfile);
+        return toProfileResponse(rejectedProfile);
     }
 }

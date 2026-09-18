@@ -27,12 +27,22 @@ import { CreateProfilePage } from './pages/alumni/CreateProfilePage';
 import { AlumniProfilePage } from './pages/alumni/AlumniProfilePage';
 import { DigitalIdPage } from './pages/alumni/DigitalIdPage';
 import { ProfileChangeRequestPage } from './pages/alumni/ProfileChangeRequestPage';
+import { AlumniCampusVisits } from './pages/alumni/AlumniCampusVisits';
+
+// Faculty / Staff Pages
+import { FacultyCampusVisits } from './pages/faculty/FacultyCampusVisits';
+
+// Watchman Gate Security Portal
+import { WatchmanPortal } from './pages/watchman/WatchmanPortal';
 
 // Admin Console Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminAlumniListPage } from './pages/admin/AdminAlumniListPage';
 import { AdminChangeRequestsPage } from './pages/admin/AdminChangeRequestsPage';
 import { AdminChangeRequestReviewPage } from './pages/admin/AdminChangeRequestReviewPage';
+import { AdminCampusVisits } from './pages/admin/AdminCampusVisits';
+import { AdminCampusEntryLogs } from './pages/admin/AdminCampusEntryLogs';
+import { AdminRfidManagement } from './pages/admin/AdminRfidManagement';
 
 export const App = () => {
   return (
@@ -56,6 +66,16 @@ export const App = () => {
       <Route path="/verify/:token" element={<PublicVerifyPage />} />
       <Route path="/directory" element={<DirectoryPage />} />
 
+      {/* Dedicated Watchman Gate Verification Portal */}
+      <Route
+        path="/watchman"
+        element={
+          <ProtectedRoute requiredRole={['ROLE_WATCHMAN', 'ROLE_ADMIN']}>
+            <WatchmanPortal />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Alumni Self-Registration Wizard (Protected) */}
       <Route
         path="/alumni/create-profile"
@@ -65,6 +85,19 @@ export const App = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* Faculty Scoped Approvals Portal */}
+      <Route
+        path="/faculty"
+        element={
+          <ProtectedRoute requiredRole={['ROLE_STAFF', 'ROLE_ADMIN']}>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="campus-visits" element={<FacultyCampusVisits />} />
+        <Route index element={<Navigate to="/faculty/campus-visits" replace />} />
+      </Route>
 
       {/* Alumni Dashboard Routes (Protected within DashboardLayout) */}
       <Route
@@ -76,6 +109,7 @@ export const App = () => {
         }
       >
         <Route path="dashboard" element={<AlumniDashboard />} />
+        <Route path="campus-visits" element={<AlumniCampusVisits />} />
         <Route path="profile" element={<AlumniProfilePage />} />
         <Route path="change-request" element={<ProfileChangeRequestPage />} />
         <Route path="virtual-id" element={<DigitalIdPage />} />
@@ -93,6 +127,9 @@ export const App = () => {
       >
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="alumni" element={<AdminAlumniListPage />} />
+        <Route path="campus-visits" element={<AdminCampusVisits />} />
+        <Route path="campus-entry-logs" element={<AdminCampusEntryLogs />} />
+        <Route path="rfid-management" element={<AdminRfidManagement />} />
         <Route path="change-requests" element={<AdminChangeRequestsPage />} />
         <Route path="change-requests/:id" element={<AdminChangeRequestReviewPage />} />
         <Route index element={<Navigate to="/admin/dashboard" replace />} />

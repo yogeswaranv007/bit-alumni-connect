@@ -28,7 +28,11 @@ export const LoginPage = () => {
     if (result.success) {
       if (from) {
         navigate(from, { replace: true });
-      } else if (result.user.roles?.includes('ROLE_ADMIN') || result.user.roles?.includes('ROLE_STAFF')) {
+      } else if (result.user.roles?.includes('ROLE_WATCHMAN')) {
+        navigate('/watchman', { replace: true });
+      } else if (result.user.roles?.includes('ROLE_STAFF')) {
+        navigate('/faculty/campus-visits', { replace: true });
+      } else if (result.user.roles?.includes('ROLE_ADMIN')) {
         navigate('/admin/dashboard', { replace: true });
       } else {
         navigate('/alumni/dashboard', { replace: true });
@@ -140,6 +144,22 @@ export const LoginPage = () => {
                 >
                   <p className="font-bold text-teal-700">Alumni Account</p>
                   <p className="text-[10px] text-slate-400 truncate">alumni@bitsathy.ac.in</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDemoFill('watchman@bitsathy.ac.in', 'Password@123')}
+                  className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold text-slate-700 text-left transition"
+                >
+                  <p className="font-bold text-amber-700">Watchman Gate</p>
+                  <p className="text-[10px] text-slate-400 truncate">watchman@bitsathy.ac.in</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDemoFill('faculty.it@bitsathy.ac.in', 'Password@123')}
+                  className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold text-slate-700 text-left transition"
+                >
+                  <p className="font-bold text-indigo-700">IT Faculty</p>
+                  <p className="text-[10px] text-slate-400 truncate">faculty.it@bitsathy.ac.in</p>
                 </button>
               </div>
             </div>

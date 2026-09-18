@@ -51,6 +51,21 @@ public record AlumniProfileUpdateRequest(
         @Size(max = 255, message = "LinkedIn URL cannot exceed 255 characters")
         String linkedinUrl,
 
-        Boolean isDirectoryVisible
+        Boolean isDirectoryVisible,
+
+        Integer departmentId,
+
+        @Size(max = 30, message = "Roll number cannot exceed 30 characters")
+        String rollNumber,
+
+        @Size(max = 30, message = "Register number cannot exceed 30 characters")
+        String registerNumber,
+
+        @Size(max = 50, message = "Degree cannot exceed 50 characters")
+        String degree,
+
+        Integer batchStartYear,
+
+        Integer batchEndYear
 ) {
 }

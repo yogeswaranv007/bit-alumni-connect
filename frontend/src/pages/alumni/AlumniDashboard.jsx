@@ -145,7 +145,7 @@ export const AlumniDashboard = () => {
             </div>
           </div>
           <Link
-            to="/alumni/profile"
+            to="/alumni/create-profile"
             className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition flex-shrink-0"
           >
             <span>Update & Resubmit</span>

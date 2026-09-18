@@ -22,7 +22,9 @@ import {
   User,
   Users,
   AlertTriangle,
-  RotateCw
+  RotateCw,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 
 export const AdminAlumniListPage = () => {
@@ -405,6 +407,21 @@ export const AdminAlumniListPage = () => {
               </div>
             )}
 
+            {selectedProfile.verificationStatus === 'REJECTED' && (
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-1.5 animate-in fade-in">
+                <div className="flex items-center space-x-2 text-rose-900 font-extrabold text-xs">
+                  <AlertTriangle className="w-4 h-4 text-rose-600" />
+                  <span>Profile Rejected — Approval Locked</span>
+                </div>
+                <p className="text-xs text-rose-800">
+                  <strong>Rejection Reason:</strong> {selectedProfile.rejectionReason || 'Details incomplete or inaccurate.'}
+                </p>
+                <p className="text-[11px] text-rose-700">
+                  The administrator cannot approve this record with the rejected details. Approval will be available only after the alumnus modifies their details and resubmits their verification request.
+                </p>
+              </div>
+            )}
+
             {/* Tab Navigation in Inspection Modal */}
             <div className="flex items-center space-x-2 border-b border-slate-200 pb-2">
               <button
@@ -600,8 +617,8 @@ export const AdminAlumniListPage = () => {
                 Close
               </button>
 
-              <div className="flex space-x-3">
-                {selectedProfile.verificationStatus !== 'VERIFIED' && !showRejectForm && (
+              <div className="flex items-center space-x-3">
+                {selectedProfile.verificationStatus === 'PENDING' && !showRejectForm && (
                   <>
                     <button
                       onClick={() => setShowRejectForm(true)}
@@ -620,6 +637,20 @@ export const AdminAlumniListPage = () => {
                       <span>Verify & Issue Virtual ID</span>
                     </button>
                   </>
+                )}
+
+                {selectedProfile.verificationStatus === 'REJECTED' && (
+                  <div className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold shadow-2xs">
+                    <Lock className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Approval Locked (Awaiting Alumnus Resubmission)</span>
+                  </div>
+                )}
+
+                {selectedProfile.verificationStatus === 'VERIFIED' && (
+                  <div className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold shadow-2xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Official Identity Verified</span>
+                  </div>
                 )}
               </div>
             </div>
