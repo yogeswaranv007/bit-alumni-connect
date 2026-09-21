@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { AdminNotificationBell } from './AdminNotificationBell';
+import { NotificationBell } from './NotificationBell';
 import {
   GraduationCap,
   LogOut,
@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 export const Navbar = ({ onToggleSidebar }) => {
-  const { user, isAuthenticated, logout, isAdmin, isAlumni } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin, isAdminOnly, isStaff, isAlumni, isWatchman } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -306,6 +306,10 @@ export const Navbar = ({ onToggleSidebar }) => {
           <div className="hidden lg:flex items-center space-x-3">
             {isAuthenticated ? (
               <>
+                {/* Universal Global Notification Bell */}
+                <NotificationBell />
+
+                {/* Role-Specific Quick Action Shortcuts */}
                 {isAlumni() && (
                   <div className="flex items-center space-x-2">
                     <Link
@@ -325,17 +329,34 @@ export const Navbar = ({ onToggleSidebar }) => {
                   </div>
                 )}
 
-                {isAdmin() && (
-                  <div className="flex items-center space-x-2">
-                    <AdminNotificationBell />
-                    <Link
-                      to="/admin/dashboard"
-                      className="text-xs font-bold text-bit-800 bg-bit-50 hover:bg-bit-100 px-3.5 py-2 rounded-xl border border-bit-200 transition flex items-center space-x-1.5 shadow-xs"
-                    >
-                      <Shield className="w-3.5 h-3.5 text-bit-700" />
-                      <span>Admin Console</span>
-                    </Link>
-                  </div>
+                {!isAdminOnly() && isStaff() && (
+                  <Link
+                    to="/faculty/campus-visits"
+                    className="text-xs font-bold text-bit-800 bg-bit-50 hover:bg-bit-100 px-3.5 py-2 rounded-xl border border-bit-200 transition flex items-center space-x-1.5 shadow-xs"
+                  >
+                    <Building className="w-3.5 h-3.5 text-bit-700" />
+                    <span>Faculty Portal</span>
+                  </Link>
+                )}
+
+                {isAdminOnly() && (
+                  <Link
+                    to="/admin/dashboard"
+                    className="text-xs font-bold text-bit-800 bg-bit-50 hover:bg-bit-100 px-3.5 py-2 rounded-xl border border-bit-200 transition flex items-center space-x-1.5 shadow-xs"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-bit-700" />
+                    <span>Admin Console</span>
+                  </Link>
+                )}
+
+                {isWatchman() && (
+                  <Link
+                    to="/watchman"
+                    className="text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3.5 py-2 rounded-xl border border-amber-200 transition flex items-center space-x-1.5 shadow-xs"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-amber-700" />
+                    <span>Gate Scanner</span>
+                  </Link>
                 )}
 
                 {/* User Dropdown */}
@@ -405,8 +426,9 @@ export const Navbar = ({ onToggleSidebar }) => {
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <div className="lg:hidden flex items-center">
+          {/* Mobile Actions: Notification Bell + Menu Toggle */}
+          <div className="lg:hidden flex items-center space-x-2">
+            {isAuthenticated && <NotificationBell />}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-slate-600 hover:bg-slate-100"
@@ -502,6 +524,14 @@ export const Navbar = ({ onToggleSidebar }) => {
                   <p className="text-[10px] text-slate-500">{user?.email}</p>
                 </div>
 
+                <Link
+                  to="/notifications"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-xl text-sm font-bold text-slate-800 hover:bg-slate-50"
+                >
+                  Notification Center
+                </Link>
+
                 {isAlumni() && (
                   <>
                     <Link
@@ -528,13 +558,33 @@ export const Navbar = ({ onToggleSidebar }) => {
                   </>
                 )}
 
-                {isAdmin() && (
+                {!isAdminOnly() && isStaff() && (
+                  <Link
+                    to="/faculty/campus-visits"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-sm font-bold text-bit-700 bg-bit-50"
+                  >
+                    Faculty Portal
+                  </Link>
+                )}
+
+                {isAdminOnly() && (
                   <Link
                     to="/admin/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block px-3 py-2 rounded-xl text-sm font-bold text-bit-700 bg-bit-50"
                   >
                     Admin Console
+                  </Link>
+                )}
+
+                {isWatchman() && (
+                  <Link
+                    to="/watchman"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-sm font-bold text-amber-800 bg-amber-50"
+                  >
+                    Watchman Portal
                   </Link>
                 )}
 

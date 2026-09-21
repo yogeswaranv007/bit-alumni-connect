@@ -37,8 +37,21 @@ public interface CampusVisitRepository extends JpaRepository<CampusVisit, UUID>,
     );
 
     @EntityGraph(attributePaths = {"alumniProfile", "alumniProfile.user", "alumniProfile.department", "department", "assignedFaculty", "approvedBy"})
-    @Query("SELECT cv FROM CampusVisit cv WHERE (cv.department.id = :departmentId OR cv.assignedFaculty.id = :facultyUserId) AND cv.status = 'PENDING' ORDER BY cv.createdAt ASC")
+    @Query("SELECT cv FROM CampusVisit cv WHERE (cv.department.id = :departmentId OR cv.assignedFaculty.id = :facultyUserId OR cv.alumniProfile.department.id = :departmentId) AND cv.status = 'PENDING' ORDER BY cv.createdAt ASC")
     List<CampusVisit> findPendingVisitsForFaculty(
+            @Param("departmentId") Integer departmentId,
+            @Param("facultyUserId") UUID facultyUserId
+    );
+
+    @Query("SELECT COUNT(cv) FROM CampusVisit cv WHERE (cv.department.id = :departmentId OR cv.assignedFaculty.id = :facultyUserId OR cv.alumniProfile.department.id = :departmentId) AND cv.status = 'PENDING'")
+    long countPendingVisitsForFaculty(
+            @Param("departmentId") Integer departmentId,
+            @Param("facultyUserId") UUID facultyUserId
+    );
+
+    @EntityGraph(attributePaths = {"alumniProfile", "alumniProfile.user", "alumniProfile.department", "department", "assignedFaculty", "approvedBy"})
+    @Query("SELECT cv FROM CampusVisit cv WHERE (cv.department.id = :departmentId OR cv.assignedFaculty.id = :facultyUserId OR cv.alumniProfile.department.id = :departmentId) AND cv.status = 'PENDING' ORDER BY cv.createdAt DESC")
+    List<CampusVisit> findTop8PendingVisitsForFaculty(
             @Param("departmentId") Integer departmentId,
             @Param("facultyUserId") UUID facultyUserId
     );
@@ -52,6 +65,9 @@ public interface CampusVisitRepository extends JpaRepository<CampusVisit, UUID>,
     long countByStatus(CampusVisitStatus status);
 
     long countByVisitDateAndStatusIn(LocalDate visitDate, Collection<CampusVisitStatus> statuses);
+
+    @EntityGraph(attributePaths = {"alumniProfile", "alumniProfile.user", "alumniProfile.department", "department", "assignedFaculty", "approvedBy"})
+    List<CampusVisit> findByVisitDateBeforeAndStatusIn(LocalDate date, Collection<CampusVisitStatus> statuses);
 
     @EntityGraph(attributePaths = {"alumniProfile", "alumniProfile.user", "alumniProfile.department", "department", "assignedFaculty", "approvedBy"})
     List<CampusVisit> findTop8ByStatusOrderByCreatedAtDesc(CampusVisitStatus status);

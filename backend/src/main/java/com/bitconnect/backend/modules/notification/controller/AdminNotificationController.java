@@ -12,6 +12,12 @@ import com.bitconnect.backend.modules.notification.dto.AdminPendingSummaryDto.Pe
 import com.bitconnect.backend.modules.profilechange.entity.ChangeRequestStatus;
 import com.bitconnect.backend.modules.profilechange.entity.ProfileChangeRequest;
 import com.bitconnect.backend.modules.profilechange.repository.ProfileChangeRequestRepository;
+import com.bitconnect.backend.modules.staff.entity.StaffProfile;
+import com.bitconnect.backend.modules.staff.repository.StaffProfileRepository;
+import com.bitconnect.backend.modules.user.entity.RoleName;
+import com.bitconnect.backend.modules.user.entity.User;
+import com.bitconnect.backend.modules.user.repository.UserRepository;
+import com.bitconnect.backend.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +32,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/pending-summary")
@@ -37,11 +45,55 @@ public class AdminNotificationController {
     private final AlumniProfileRepository alumniProfileRepository;
     private final CampusVisitRepository campusVisitRepository;
     private final ProfileChangeRequestRepository profileChangeRequestRepository;
+    private final UserRepository userRepository;
+    private final StaffProfileRepository staffProfileRepository;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     @Operation(summary = "Get unread/pending request summary counts and recent activity for Admin console")
     public ResponseEntity<ApiResponse<AdminPendingSummaryDto>> getPendingSummary() {
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
+        User currentUser = currentUserId != null ? userRepository.findById(currentUserId).orElse(null) : null;
+        boolean isAdmin = currentUser != null && currentUser.getRoles().stream().anyMatch(r -> r.getName() == RoleName.ROLE_ADMIN);
+        boolean isStaff = currentUser != null && currentUser.getRoles().stream().anyMatch(r -> r.getName() == RoleName.ROLE_STAFF);
+
+        // If faculty (staff and not admin)
+        if (!isAdmin && isStaff && currentUserId != null) {
+            Optional<StaffProfile> staffOpt = staffProfileRepository.findByUserId(currentUserId);
+            Integer deptId = staffOpt.map(s -> s.getDepartment() != null ? s.getDepartment().getId() : null).orElse(null);
+
+            long pendingVisits = campusVisitRepository.countPendingVisitsForFaculty(deptId, currentUserId);
+            List<CampusVisit> recentVisits = campusVisitRepository.findTop8PendingVisitsForFaculty(deptId, currentUserId);
+
+            List<PendingActivityItemDto> activities = new ArrayList<>();
+            for (CampusVisit cv : recentVisits) {
+                String name = cv.getAlumniProfile() != null && cv.getAlumniProfile().getUser() != null
+                        ? cv.getAlumniProfile().getUser().getFullName() : "Alumnus";
+                String reg = cv.getAlumniProfile() != null ? cv.getAlumniProfile().getRegisterNumber() : "N/A";
+                Instant ts = cv.getCreatedAt() != null ? cv.getCreatedAt() : Instant.now();
+                String purpose = cv.getPurpose() != null ? cv.getPurpose() : "Campus Visit";
+                activities.add(new PendingActivityItemDto(
+                        cv.getId(),
+                        "CAMPUS_VISIT",
+                        "Department Campus Visit Authorization",
+                        String.format("%s requested visit pass for %s on %s", name, purpose, cv.getVisitDate()),
+                        name,
+                        reg,
+                        ts,
+                        "/faculty/campus-visits"
+                ));
+            }
+
+            AdminPendingSummaryDto summary = new AdminPendingSummaryDto(
+                    0,
+                    pendingVisits,
+                    0,
+                    pendingVisits,
+                    activities
+            );
+            return ResponseEntity.ok(ApiResponse.success(summary));
+        }
+
         long pendingVerifications = alumniProfileRepository.countByVerificationStatus(VerificationStatus.PENDING);
         long pendingVisits = campusVisitRepository.countByStatus(CampusVisitStatus.PENDING);
         long pendingChanges = profileChangeRequestRepository.countByStatus(ChangeRequestStatus.PENDING);

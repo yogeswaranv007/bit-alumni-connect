@@ -23,6 +23,8 @@ public interface VirtualIdService {
 
     VirtualIdCardResponse regenerateQrToken(UUID virtualIdId, UUID requestorId);
 
+    VirtualIdCardResponse regenerateQrTokenByAlumniProfileId(UUID alumniProfileId, UUID requestorId);
+
     VirtualIdCardResponse updateVirtualIdStatus(UUID virtualIdId, VirtualIdStatus status);
 
     PublicVerificationResponse verifyPublicToken(String token);

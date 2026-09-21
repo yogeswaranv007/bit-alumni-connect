@@ -57,7 +57,7 @@ public class CampusVisitStatusHistory extends BaseAuditableEntity {
     @Column(name = "comment", columnDefinition = "TEXT")
     private String comment;
 
-    @Column(name = "changed_by", nullable = false)
+    @Column(name = "changed_by")
     private UUID changedBy;
 
     @Column(name = "changed_by_name", length = 120)

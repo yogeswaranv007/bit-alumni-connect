@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { campusVisitApi } from '../../api/campusVisitApi';
+import { useAuth } from '../../context/AuthContext';
 import {
   Clock,
   ShieldCheck,
@@ -30,6 +31,8 @@ import {
 } from 'lucide-react';
 
 export const AdminCampusEntryLogs = () => {
+  const { isStaff, isAdminOnly, user } = useAuth();
+  const isFacultyScoped = isStaff() && !isAdminOnly();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -195,10 +198,12 @@ export const AdminCampusEntryLogs = () => {
               </div>
               <div>
                 <h1 className="text-xl font-black text-slate-900 tracking-tight">
-                  Campus Gate Entry Audit & Investigation
+                  {isFacultyScoped ? 'Department Gate Entry Logs & Audit' : 'Campus Gate Entry Audit & Investigation'}
                 </h1>
                 <p className="text-xs text-slate-500 font-medium">
-                  Authorized Physical Security Audit Console • Bannari Amman Institute of Technology
+                  {isFacultyScoped
+                    ? `Department-Scoped Gate Entry Activity • ${user?.email || 'Faculty'}`
+                    : 'Authorized Physical Security Audit Console • Bannari Amman Institute of Technology'}
                 </p>
               </div>
             </div>
@@ -220,8 +225,12 @@ export const AdminCampusEntryLogs = () => {
         <div className="flex items-start space-x-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600">
           <Lock className="w-4 h-4 text-bit-700 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <span className="font-extrabold text-slate-900 mr-1">Tamper-Proof Audit Trail:</span>
-            All gate clearance records are immutable, cryptographically timestamped upon watchman scan/verification, and strictly restricted to authorized administrators and chief security officers. Historical records cannot be modified or deleted.
+            <span className="font-extrabold text-slate-900 mr-1">
+              {isFacultyScoped ? 'Department Scoped Audit Trail:' : 'Tamper-Proof Audit Trail:'}
+            </span>
+            {isFacultyScoped
+              ? 'Displaying authorized gate entries for alumni and campus visits affiliated with your academic department.'
+              : 'All gate clearance records are immutable, cryptographically timestamped upon watchman scan/verification, and strictly restricted to authorized administrators and chief security officers. Historical records cannot be modified or deleted.'}
           </div>
         </div>
       </div>

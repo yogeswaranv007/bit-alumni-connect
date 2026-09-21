@@ -6,6 +6,7 @@ import com.bitconnect.backend.modules.gate.dto.GateLogDto;
 import com.bitconnect.backend.modules.gate.entity.EntryDecision;
 import com.bitconnect.backend.modules.gate.entity.VerificationMethod;
 import com.bitconnect.backend.modules.gate.service.CampusEntryLogService;
+import com.bitconnect.backend.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,11 +51,12 @@ public class AdminCampusEntryLogController {
             @RequestParam(defaultValue = "entryTimestamp") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection) {
 
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
         Sort sort = sortDirection.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, Math.min(size, 100), sort);
 
         PagedResponse<GateLogDto> response = entryLogService.searchEntryLogs(
-                startDate, endDate, entryDate, method, decision, gate, departmentId, search, pageable
+                currentUserId, startDate, endDate, entryDate, method, decision, gate, departmentId, search, pageable
         );
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -63,7 +65,8 @@ public class AdminCampusEntryLogController {
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     @Operation(summary = "Inspect single gate entry audit trail record")
     public ResponseEntity<ApiResponse<GateLogDto>> getEntryLogDetail(@PathVariable UUID id) {
-        GateLogDto log = entryLogService.getEntryLogById(id);
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
+        GateLogDto log = entryLogService.getEntryLogById(id, currentUserId);
         return ResponseEntity.ok(ApiResponse.success(log));
     }
 }

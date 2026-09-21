@@ -1,6 +1,6 @@
 package com.bitconnect.backend.modules.gate.service.impl;
 
-import com.bitconnect.backend.common.exception.BadRequestException;
+import com.bitconnect.backend.common.exception.ForbiddenException;
 import com.bitconnect.backend.common.exception.ResourceNotFoundException;
 import com.bitconnect.backend.common.response.PagedResponse;
 import com.bitconnect.backend.modules.alumni.entity.AlumniProfile;
@@ -20,6 +20,8 @@ import com.bitconnect.backend.modules.gate.service.CampusEntryAuthorizationServi
 import com.bitconnect.backend.modules.gate.service.CampusEntryLogService;
 import com.bitconnect.backend.modules.notification.entity.NotificationType;
 import com.bitconnect.backend.modules.notification.service.NotificationService;
+import com.bitconnect.backend.modules.staff.entity.StaffProfile;
+import com.bitconnect.backend.modules.staff.repository.StaffProfileRepository;
 import com.bitconnect.backend.modules.user.entity.RoleName;
 import com.bitconnect.backend.modules.user.entity.User;
 import com.bitconnect.backend.modules.user.repository.UserRepository;
@@ -48,6 +50,7 @@ public class CampusEntryLogServiceImpl implements CampusEntryLogService {
     private final CampusEntryLogRepository entryLogRepository;
     private final AlumniProfileRepository alumniProfileRepository;
     private final CampusVisitRepository campusVisitRepository;
+    private final StaffProfileRepository staffProfileRepository;
     private final UserRepository userRepository;
     private final CampusEntryAuthorizationService authorizationService;
     private final NotificationService notificationService;
@@ -72,7 +75,7 @@ public class CampusEntryLogServiceImpl implements CampusEntryLogService {
         List<CampusVisit> visits = campusVisitRepository.findByAlumniProfileIdAndVisitDateAndStatusIn(
                 profile.getId(),
                 today,
-                List.of(CampusVisitStatus.APPROVED, CampusVisitStatus.SCHEDULED, CampusVisitStatus.PENDING, CampusVisitStatus.REJECTED, CampusVisitStatus.CANCELLED, CampusVisitStatus.COMPLETED)
+                List.of(CampusVisitStatus.APPROVED, CampusVisitStatus.SCHEDULED, CampusVisitStatus.PENDING, CampusVisitStatus.REJECTED, CampusVisitStatus.CANCELLED, CampusVisitStatus.COMPLETED, CampusVisitStatus.EXPIRED)
         );
         CampusVisit visit = selectBestVisit(visits);
 
@@ -114,23 +117,64 @@ public class CampusEntryLogServiceImpl implements CampusEntryLogService {
             // 1. Notify Alumnus
             notificationService.sendNotification(
                     profile.getUser(),
-                    NotificationType.ENTRY_VERIFIED,
+                    NotificationType.ALUMNI_GATE_ENTRY,
                     "Campus Entry Verified",
                     String.format("Your campus entry was verified at %s at %s for %s.", gate, now.toString().substring(0, 5), purpose),
                     savedLog.getId(),
-                    "CampusEntryLog"
+                    "GATE_ENTRY",
+                    "/alumni/campus-visits"
             );
 
-            // 2. Notify Approver (Faculty / Admin)
-            if (visit != null && visit.getApprovedBy() != null) {
-                notificationService.sendNotification(
-                        visit.getApprovedBy(),
-                        NotificationType.ENTRY_VERIFIED,
-                        "Alumnus Arrived at Gate",
-                        String.format("Alumnus %s (%s) has arrived at %s for %s.", profile.getUser().getFullName(), profile.getRollNumber(), gate, purpose),
-                        savedLog.getId(),
-                        "CampusEntryLog"
-                );
+            // 2. Notify Approver (Faculty / Admin), Assigned Host, and Department Faculty
+            if (visit != null) {
+                if (visit.getApprovedBy() != null) {
+                    notificationService.sendNotification(
+                            visit.getApprovedBy(),
+                            NotificationType.ALUMNI_GATE_ENTRY,
+                            "Alumnus Arrived at Gate",
+                            String.format("Alumnus %s (%s) has arrived at %s for %s.", profile.getUser().getFullName(), profile.getRollNumber(), gate, purpose),
+                            savedLog.getId(),
+                            "GATE_ENTRY",
+                            "/faculty/campus-entry-logs",
+                            profile.getUser().getFullName()
+                    );
+                }
+
+                if (visit.getAssignedFaculty() != null && (visit.getApprovedBy() == null || !visit.getAssignedFaculty().getId().equals(visit.getApprovedBy().getId()))) {
+                    notificationService.sendNotification(
+                            visit.getAssignedFaculty(),
+                            NotificationType.ALUMNI_GATE_ENTRY,
+                            "Alumnus Arrived at Gate",
+                            String.format("Alumnus %s (%s) has arrived at %s for your meeting: %s.", profile.getUser().getFullName(), profile.getRollNumber(), gate, purpose),
+                            savedLog.getId(),
+                            "GATE_ENTRY",
+                            "/faculty/campus-entry-logs",
+                            profile.getUser().getFullName()
+                    );
+                }
+
+                if (visit.getDepartment() != null) {
+                    List<StaffProfile> deptStaff = staffProfileRepository.findByDepartmentId(visit.getDepartment().getId());
+                    for (StaffProfile sp : deptStaff) {
+                        if (sp.getUser() != null) {
+                            UUID uId = sp.getUser().getId();
+                            boolean alreadySent = (visit.getApprovedBy() != null && visit.getApprovedBy().getId().equals(uId)) ||
+                                                  (visit.getAssignedFaculty() != null && visit.getAssignedFaculty().getId().equals(uId));
+                            if (!alreadySent) {
+                                notificationService.sendNotification(
+                                        sp.getUser(),
+                                        NotificationType.ALUMNI_GATE_ENTRY,
+                                        "Department Alumnus Arrived at Gate",
+                                        String.format("Alumnus %s (%s) arrived at %s for %s (%s).", profile.getUser().getFullName(), profile.getRollNumber(), gate, purpose, visit.getDepartment().getName()),
+                                        savedLog.getId(),
+                                        "GATE_ENTRY",
+                                        "/faculty/campus-entry-logs",
+                                        profile.getUser().getFullName()
+                                );
+                            }
+                        }
+                    }
+                }
             }
 
             // 3. Notify Alumni Admin / Association security monitoring
@@ -139,11 +183,13 @@ public class CampusEntryLogServiceImpl implements CampusEntryLogService {
                 if (visit == null || visit.getApprovedBy() == null || !admin.getId().equals(visit.getApprovedBy().getId())) {
                     notificationService.sendNotification(
                             admin,
-                            NotificationType.SECURITY_ALERT,
+                            NotificationType.ALUMNI_GATE_ENTRY,
                             "Gate Entry Logged",
                             String.format("Entry verified for %s (%s) at %s via %s.", profile.getUser().getFullName(), profile.getRollNumber(), gate, request.verificationMethod()),
                             savedLog.getId(),
-                            "CampusEntryLog"
+                            "GATE_ENTRY",
+                            "/admin/campus-entry-logs",
+                            profile.getUser().getFullName()
                     );
                 }
             }
@@ -165,6 +211,7 @@ public class CampusEntryLogServiceImpl implements CampusEntryLogService {
     @Override
     @Transactional(readOnly = true)
     public PagedResponse<GateLogDto> searchEntryLogs(
+            UUID currentUserId,
             LocalDate startDate,
             LocalDate endDate,
             LocalDate entryDate,
@@ -175,8 +222,38 @@ public class CampusEntryLogServiceImpl implements CampusEntryLogService {
             String search,
             Pageable pageable
     ) {
+        // Scoping check for Faculty (Staff without Admin role)
+        Integer facultyDeptId = null;
+        if (currentUserId != null) {
+            Optional<User> userOpt = userRepository.findById(currentUserId);
+            boolean isAdmin = userOpt.map(u -> u.getRoles().stream().anyMatch(r -> r.getName() == RoleName.ROLE_ADMIN)).orElse(false);
+            boolean isStaff = userOpt.map(u -> u.getRoles().stream().anyMatch(r -> r.getName() == RoleName.ROLE_STAFF)).orElse(false);
+
+            if (!isAdmin && isStaff) {
+                Optional<StaffProfile> staffOpt = staffProfileRepository.findByUserId(currentUserId);
+                if (staffOpt.isPresent() && staffOpt.get().getDepartment() != null) {
+                    facultyDeptId = staffOpt.get().getDepartment().getId();
+                }
+            }
+        }
+
+        final Integer finalFacultyDeptId = facultyDeptId;
+        final UUID finalFacultyUserId = currentUserId;
+
         Specification<CampusEntryLog> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            jakarta.persistence.criteria.Join<CampusEntryLog, AlumniProfile> alumniJoin = root.join("alumniProfile", jakarta.persistence.criteria.JoinType.LEFT);
+            jakarta.persistence.criteria.Join<CampusEntryLog, CampusVisit> visitJoin = root.join("campusVisit", jakarta.persistence.criteria.JoinType.LEFT);
+
+            // Department / Faculty isolation (strictly restricted to faculty's department)
+            if (finalFacultyDeptId != null) {
+                Predicate alumniDeptMatch = cb.equal(alumniJoin.get("department").get("id"), finalFacultyDeptId);
+                Predicate visitDeptMatch = cb.equal(visitJoin.get("department").get("id"), finalFacultyDeptId);
+                predicates.add(cb.or(alumniDeptMatch, visitDeptMatch));
+            } else if (departmentId != null) {
+                predicates.add(cb.equal(alumniJoin.get("department").get("id"), departmentId));
+            }
 
             if (startDate != null && endDate != null) {
                 predicates.add(cb.between(root.get("entryDate"), startDate, endDate));
@@ -197,18 +274,15 @@ public class CampusEntryLogServiceImpl implements CampusEntryLogService {
             if (gate != null && !gate.isBlank()) {
                 predicates.add(cb.equal(cb.lower(root.get("gate")), gate.toLowerCase().trim()));
             }
-            if (departmentId != null) {
-                predicates.add(cb.equal(root.get("alumniProfile").get("department").get("id"), departmentId));
-            }
             if (search != null && !search.isBlank()) {
                 String term = "%" + search.toLowerCase().trim() + "%";
-                Predicate nameMatch = cb.like(cb.lower(root.get("alumniProfile").get("user").get("fullName")), term);
-                Predicate rollMatch = cb.like(cb.lower(root.get("alumniProfile").get("rollNumber")), term);
-                Predicate regMatch = cb.like(cb.lower(root.get("alumniProfile").get("registerNumber")), term);
+                Predicate nameMatch = cb.like(cb.lower(alumniJoin.get("user").get("fullName")), term);
+                Predicate rollMatch = cb.like(cb.lower(alumniJoin.get("rollNumber")), term);
+                Predicate regMatch = cb.like(cb.lower(alumniJoin.get("registerNumber")), term);
                 Predicate gateMatch = cb.like(cb.lower(root.get("gate")), term);
                 Predicate approverMatch = cb.like(cb.lower(root.get("approvalAuthorityName")), term);
                 Predicate remarksMatch = cb.like(cb.lower(root.get("remarks")), term);
-                Predicate visitPurposeMatch = cb.like(cb.lower(root.get("campusVisit").get("purpose")), term);
+                Predicate visitPurposeMatch = cb.like(cb.lower(visitJoin.get("purpose")), term);
                 predicates.add(cb.or(nameMatch, rollMatch, regMatch, gateMatch, approverMatch, remarksMatch, visitPurposeMatch));
             }
 
@@ -232,9 +306,37 @@ public class CampusEntryLogServiceImpl implements CampusEntryLogService {
 
     @Override
     @Transactional(readOnly = true)
-    public GateLogDto getEntryLogById(UUID id) {
+    public GateLogDto getEntryLogById(UUID id, UUID currentUserId) {
         CampusEntryLog log = entryLogRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("CampusEntryLog", "id", id));
+
+        if (currentUserId != null) {
+            Optional<User> userOpt = userRepository.findById(currentUserId);
+            boolean isAdmin = userOpt.map(u -> u.getRoles().stream().anyMatch(r -> r.getName() == RoleName.ROLE_ADMIN)).orElse(false);
+            boolean isStaff = userOpt.map(u -> u.getRoles().stream().anyMatch(r -> r.getName() == RoleName.ROLE_STAFF)).orElse(false);
+
+            if (!isAdmin && isStaff) {
+                Optional<StaffProfile> staffOpt = staffProfileRepository.findByUserId(currentUserId);
+                Integer facultyDeptId = staffOpt.map(s -> s.getDepartment() != null ? s.getDepartment().getId() : null).orElse(null);
+
+                boolean isAuthorized = false;
+                if (facultyDeptId != null) {
+                    if (log.getAlumniProfile() != null && log.getAlumniProfile().getDepartment() != null &&
+                            facultyDeptId.equals(log.getAlumniProfile().getDepartment().getId())) {
+                        isAuthorized = true;
+                    }
+                    if (log.getCampusVisit() != null && log.getCampusVisit().getDepartment() != null &&
+                            facultyDeptId.equals(log.getCampusVisit().getDepartment().getId())) {
+                        isAuthorized = true;
+                    }
+                }
+
+                if (!isAuthorized) {
+                    throw new ForbiddenException("You are not authorized to view gate entry logs outside your department.");
+                }
+            }
+        }
+
         return GateLogDto.from(log);
     }
 

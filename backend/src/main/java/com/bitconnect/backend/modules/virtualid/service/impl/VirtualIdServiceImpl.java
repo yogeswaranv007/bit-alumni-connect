@@ -15,6 +15,8 @@ import com.bitconnect.backend.modules.virtualid.repository.VirtualAlumniIdReposi
 import com.bitconnect.backend.modules.virtualid.service.AlumniIdGeneratorService;
 import com.bitconnect.backend.modules.virtualid.service.QrCodeGeneratorService;
 import com.bitconnect.backend.modules.virtualid.service.VirtualIdService;
+import com.bitconnect.backend.modules.notification.entity.NotificationType;
+import com.bitconnect.backend.modules.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,7 @@ public class VirtualIdServiceImpl implements VirtualIdService {
     private final QrVerificationTokenRepository qrVerificationTokenRepository;
     private final AlumniIdGeneratorService alumniIdGeneratorService;
     private final QrCodeGeneratorService qrCodeGeneratorService;
+    private final NotificationService notificationService;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendBaseUrl;
@@ -65,6 +68,18 @@ public class VirtualIdServiceImpl implements VirtualIdService {
         // Issue initial active QR token
         createActiveQrToken(savedVirtualId);
         log.info("Issued Virtual Alumni ID: {} for profile: {}", alumniIdCardNumber, profile.getId());
+
+        if (profile.getUser() != null) {
+            notificationService.sendNotification(
+                    profile.getUser(),
+                    NotificationType.DIGITAL_ID_GENERATED,
+                    "Digital Alumni ID Issued",
+                    String.format("Your official BIT Digital Alumni ID (%s) has been issued and is now active.", alumniIdCardNumber),
+                    savedVirtualId.getId(),
+                    "VIRTUAL_ID",
+                    "/alumni/virtual-id"
+            );
+        }
 
         return savedVirtualId;
     }
@@ -110,6 +125,15 @@ public class VirtualIdServiceImpl implements VirtualIdService {
         log.info("Regenerated new active QR token for Virtual ID: {} by user ID: {}", virtualIdId, requestorId);
 
         return buildCardResponse(virtualId);
+    }
+
+    @Override
+    @Transactional
+    public VirtualIdCardResponse regenerateQrTokenByAlumniProfileId(UUID alumniProfileId, UUID requestorId) {
+        VirtualAlumniId virtualId = virtualAlumniIdRepository.findByAlumniProfileId(alumniProfileId)
+                .orElseThrow(() -> new ResourceNotFoundException("Virtual Alumni ID not found for alumni profile ID: " + alumniProfileId));
+
+        return regenerateQrToken(virtualId.getId(), requestorId);
     }
 
     @Override

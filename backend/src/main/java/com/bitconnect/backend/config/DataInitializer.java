@@ -87,10 +87,21 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         try {
-            jdbcTemplate.execute("ALTER TABLE roles DROP CONSTRAINT IF EXISTS roles_name_check");
-            log.info("Dropped legacy roles_name_check constraint if present");
+            jdbcTemplate.execute("ALTER TABLE campus_visit_status_history ALTER COLUMN changed_by DROP NOT NULL");
+            jdbcTemplate.execute("ALTER TABLE campus_visits DROP CONSTRAINT IF EXISTS campus_visits_status_check");
+            jdbcTemplate.execute("ALTER TABLE campus_visit_status_history DROP CONSTRAINT IF EXISTS campus_visit_status_history_new_status_check");
+            jdbcTemplate.execute("ALTER TABLE campus_visit_status_history DROP CONSTRAINT IF EXISTS campus_visit_status_history_old_status_check");
+            log.info("Migrated campus_visit_status_history and dropped status check constraints");
         } catch (Exception ex) {
-            log.debug("Role constraint migration note: {}", ex.getMessage());
+            log.debug("Column/constraint migration for campus_visit_status_history note: {}", ex.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE roles DROP CONSTRAINT IF EXISTS roles_name_check");
+            jdbcTemplate.execute("ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check");
+            log.info("Dropped legacy roles_name_check and notifications_type_check constraints if present");
+        } catch (Exception ex) {
+            log.debug("Role/notification constraint migration note: {}", ex.getMessage());
         }
     }
 

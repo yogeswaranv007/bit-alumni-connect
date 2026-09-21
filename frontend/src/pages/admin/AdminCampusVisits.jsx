@@ -384,6 +384,7 @@ export const AdminCampusVisits = () => {
               <option value="PENDING">Pending Review</option>
               <option value="APPROVED">Approved</option>
               <option value="SCHEDULED">Scheduled</option>
+              <option value="EXPIRED">Expired</option>
               <option value="REJECTED">Rejected</option>
               <option value="CANCELLED">Cancelled</option>
               <option value="COMPLETED">Completed</option>
@@ -517,6 +518,8 @@ export const AdminCampusVisits = () => {
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : v.status === 'PENDING'
                               ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : v.status === 'EXPIRED'
+                              ? 'bg-zinc-100 text-zinc-500 border border-zinc-200'
                               : v.status === 'REJECTED'
                               ? 'bg-rose-50 text-rose-700 border border-rose-200'
                               : 'bg-slate-100 text-slate-600'

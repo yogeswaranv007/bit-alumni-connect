@@ -286,7 +286,7 @@ public class CampusEntryAuthorizationServiceImpl implements CampusEntryAuthoriza
         List<CampusVisit> todayVisits = campusVisitRepository.findByAlumniProfileIdAndVisitDateAndStatusIn(
                 profile.getId(),
                 today,
-                List.of(CampusVisitStatus.PENDING, CampusVisitStatus.APPROVED, CampusVisitStatus.SCHEDULED, CampusVisitStatus.REJECTED, CampusVisitStatus.CANCELLED, CampusVisitStatus.COMPLETED)
+                List.of(CampusVisitStatus.PENDING, CampusVisitStatus.APPROVED, CampusVisitStatus.SCHEDULED, CampusVisitStatus.REJECTED, CampusVisitStatus.CANCELLED, CampusVisitStatus.COMPLETED, CampusVisitStatus.EXPIRED)
         );
 
         CampusVisit visit = selectBestVisit(todayVisits);
@@ -316,6 +316,18 @@ public class CampusEntryAuthorizationServiceImpl implements CampusEntryAuthoriza
         TimingStatus timingStatus = calculateTimingStatus(targetTime);
 
         // 5. Evaluate Decision
+        if (visit.getStatus() == CampusVisitStatus.EXPIRED) {
+            return new WatchmanVerificationResponse(
+                    EntryDecision.DENIED,
+                    "Campus visit request has EXPIRED as the scheduled visit date (" + visit.getVisitDate() + ") has already passed.",
+                    method,
+                    alumniSummary,
+                    visitSummary,
+                    activities,
+                    timingStatus
+            );
+        }
+
         if (visit.getStatus() == CampusVisitStatus.REJECTED) {
             String reason = visit.getAdminComment() != null ? visit.getAdminComment() : "Visit was rejected by administrator";
             return new WatchmanVerificationResponse(

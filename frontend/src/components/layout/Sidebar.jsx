@@ -49,7 +49,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
   const staffLinks = [
     { name: 'Faculty Approvals', path: '/faculty/campus-visits', icon: CalendarCheck, badge: pendingSummary?.pendingCampusVisits },
-    { name: 'Gate Entry Logs', path: '/admin/campus-entry-logs', icon: Clock },
+    { name: 'Gate Entry Logs', path: '/faculty/campus-entry-logs', icon: Clock },
     { name: 'Alumni Directory', path: '/directory', icon: Users },
   ];
 

@@ -19,6 +19,9 @@ import com.bitconnect.backend.modules.profilechange.entity.ChangeRequestStatus;
 import com.bitconnect.backend.modules.profilechange.entity.ProfileChangeRequest;
 import com.bitconnect.backend.modules.profilechange.repository.ProfileChangeRequestRepository;
 import com.bitconnect.backend.modules.profilechange.service.ProfileChangeRequestService;
+import com.bitconnect.backend.modules.notification.entity.NotificationType;
+import com.bitconnect.backend.modules.notification.service.NotificationService;
+import com.bitconnect.backend.modules.user.entity.RoleName;
 import com.bitconnect.backend.modules.user.entity.User;
 import com.bitconnect.backend.modules.user.repository.UserRepository;
 import com.bitconnect.backend.modules.virtualid.dto.VirtualIdCardResponse;
@@ -60,6 +63,7 @@ public class ProfileChangeRequestServiceImpl implements ProfileChangeRequestServ
     private final DepartmentRepository departmentRepository;
     private final VirtualAlumniIdRepository virtualAlumniIdRepository;
     private final VirtualIdService virtualIdService;
+    private final NotificationService notificationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
@@ -95,6 +99,22 @@ public class ProfileChangeRequestServiceImpl implements ProfileChangeRequestServ
 
         ProfileChangeRequest saved = changeRequestRepository.save(changeRequest);
         log.info("Created ProfileChangeRequest ID: {} for alumni profile: {}", saved.getId(), profile.getId());
+
+        // Notify administrators of submitted profile change request
+        List<User> admins = userRepository.findByRolesName(RoleName.ROLE_ADMIN);
+        String alumnusName = profile.getUser() != null ? profile.getUser().getFullName() : "Alumnus";
+        for (User admin : admins) {
+            notificationService.sendNotification(
+                    admin,
+                    NotificationType.PROFILE_CHANGE_REQUEST,
+                    "New Profile Change Request",
+                    String.format("%s (%s) submitted a profile change request for review.", alumnusName, profile.getRegisterNumber()),
+                    saved.getId(),
+                    "PROFILE_CHANGE_REQUEST",
+                    "/admin/change-requests",
+                    alumnusName
+            );
+        }
 
         return ProfileChangeRequestResponse.fromEntity(saved);
     }
@@ -340,6 +360,19 @@ public class ProfileChangeRequestServiceImpl implements ProfileChangeRequestServ
         ProfileChangeRequest saved = changeRequestRepository.save(changeRequest);
         log.info("Admin ID: {} approved ProfileChangeRequest ID: {} for alumni profile ID: {}", adminId, id, profile.getId());
 
+        // Notify alumnus of approved changes
+        if (profile.getUser() != null) {
+            notificationService.sendNotification(
+                    profile.getUser(),
+                    NotificationType.PROFILE_CHANGE_APPROVED,
+                    "Profile Changes Approved",
+                    "Your requested profile modifications have been approved and applied to your official record.",
+                    saved.getId(),
+                    "PROFILE_CHANGE_REQUEST",
+                    "/alumni/profile"
+            );
+        }
+
         return ProfileChangeRequestResponse.fromEntity(saved);
     }
 
@@ -364,6 +397,20 @@ public class ProfileChangeRequestServiceImpl implements ProfileChangeRequestServ
 
         ProfileChangeRequest saved = changeRequestRepository.save(changeRequest);
         log.info("Admin ID: {} rejected ProfileChangeRequest ID: {} with reason: {}", adminId, id, request.comment());
+
+        // Notify alumnus of rejection
+        AlumniProfile profile = changeRequest.getAlumniProfile();
+        if (profile != null && profile.getUser() != null) {
+            notificationService.sendNotification(
+                    profile.getUser(),
+                    NotificationType.PROFILE_CHANGE_REJECTED,
+                    "Profile Change Request Rejected",
+                    "Your profile change request was rejected: " + request.comment().trim(),
+                    saved.getId(),
+                    "PROFILE_CHANGE_REQUEST",
+                    "/alumni/profile"
+            );
+        }
 
         return ProfileChangeRequestResponse.fromEntity(saved);
     }

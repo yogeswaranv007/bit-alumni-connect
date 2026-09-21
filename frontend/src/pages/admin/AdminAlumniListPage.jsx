@@ -176,15 +176,21 @@ export const AdminAlumniListPage = () => {
   };
 
   const handleRegenerateQr = async (virtualIdId) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to regenerate the QR code for this alumnus? This will immediately revoke the old QR verification token and generate a new official token.'
+    );
+    if (!confirmed) return;
+
     setActionLoading(true);
+    setActionMessage('');
     try {
       const res = await adminApi.regenerateVirtualIdQr(virtualIdId);
       if (res.success) {
         setVirtualIdInfo(res.data);
-        setActionMessage('QR verification token rotated successfully.');
+        setActionMessage('QR verification code regenerated and updated successfully for this alumnus.');
       }
     } catch (err) {
-      setActionMessage('QR rotation failed: ' + err.message);
+      setActionMessage('QR regeneration failed: ' + (err.message || 'Server error'));
     } finally {
       setActionLoading(false);
     }
@@ -565,10 +571,10 @@ export const AdminAlumniListPage = () => {
                   <button
                     onClick={() => handleRegenerateQr(virtualIdInfo.id)}
                     disabled={actionLoading}
-                    className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition disabled:opacity-50"
+                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
                   >
-                    <RotateCw className="w-3 h-3" />
-                    <span>Rotate QR Token</span>
+                    <RotateCw className="w-3.5 h-3.5" />
+                    <span>Regenerate QR Code</span>
                   </button>
                 </div>
                 <p className="text-[11px] text-emerald-800">

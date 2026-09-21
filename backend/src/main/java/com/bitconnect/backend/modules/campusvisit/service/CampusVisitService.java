@@ -82,4 +82,6 @@ public interface CampusVisitService {
     CampusVisitResponse adminScheduleVisit(UUID visitId, UUID adminUserId, CampusVisitScheduleRequest request);
 
     CampusVisitStatsResponse getAdminStats();
+
+    int expireOutdatedVisits();
 }
