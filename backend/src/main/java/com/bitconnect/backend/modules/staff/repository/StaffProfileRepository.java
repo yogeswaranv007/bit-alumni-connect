@@ -14,6 +14,9 @@ public interface StaffProfileRepository extends JpaRepository<StaffProfile, UUID
     @EntityGraph(attributePaths = {"user", "department"})
     Optional<StaffProfile> findByUserId(UUID userId);
 
+    @EntityGraph(attributePaths = {"user", "department"})
+    java.util.List<StaffProfile> findByDepartmentId(Integer departmentId);
+
     boolean existsByUserId(UUID userId);
 
     boolean existsByStaffCode(String staffCode);

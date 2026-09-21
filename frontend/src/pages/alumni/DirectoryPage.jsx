@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { alumniApi } from '../../api/alumniApi';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import {
@@ -11,7 +12,8 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  GraduationCap
+  GraduationCap,
+  ArrowLeft
 } from 'lucide-react';
 import { LinkedInIcon } from '../../components/common/Icons';
 import { Navbar } from '../../components/layout/Navbar';
@@ -19,6 +21,7 @@ import { Footer } from '../../components/layout/Footer';
 import { useAuth } from '../../context/AuthContext';
 
 export const DirectoryPage = () => {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [alumniList, setAlumniList] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -30,6 +33,16 @@ export const DirectoryPage = () => {
   const [search, setSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedBatch, setSelectedBatch] = useState('');
+
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/');
+    }
+  };
 
   const fetchDepartments = async () => {
     try {
@@ -89,10 +102,10 @@ export const DirectoryPage = () => {
       {!isAuthenticated && <Navbar />}
 
       <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-200">
-        {/* Header Title */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-2">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold">
+        {/* Header Title & Back Button */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold flex-shrink-0 shadow-xs">
               <Users className="w-6 h-6" />
             </div>
             <div>
@@ -104,6 +117,15 @@ export const DirectoryPage = () => {
               </p>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs cursor-pointer hover:border-slate-300"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-600" />
+            <span>Go Back</span>
+          </button>
         </div>
 
         {/* Filter Bar */}

@@ -8,4 +8,5 @@ export const adminApi = {
   getVirtualIdByAlumniId: (alumniProfileId) => axiosClient.get(`/admin/virtual-ids/${alumniProfileId}`),
   updateVirtualIdStatus: (id, status) => axiosClient.patch(`/admin/virtual-ids/${id}/status`, { status }),
   regenerateVirtualIdQr: (id) => axiosClient.post(`/admin/virtual-ids/${id}/regenerate-qr`),
+  regenerateVirtualIdQrByAlumniId: (alumniProfileId) => axiosClient.post(`/admin/virtual-ids/by-alumni/${alumniProfileId}/regenerate-qr`),
 };

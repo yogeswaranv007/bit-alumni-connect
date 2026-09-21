@@ -195,9 +195,14 @@ class VirtualIdControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.scanCount", is(2)));
 
-        // 5. Alumni regenerates QR token (rotates token)
-        MvcResult regenResult = mockMvc.perform(post("/api/v1/alumni/virtual-id/regenerate-qr")
+        // 5. Alumni CANNOT regenerate QR token (endpoint removed / stable credential)
+        mockMvc.perform(post("/api/v1/alumni/virtual-id/regenerate-qr")
                         .header("Authorization", "Bearer " + alumniToken))
+                .andExpect(status().is4xxClientError());
+
+        // 6. Admin regenerates QR token for alumnus via admin endpoint
+        MvcResult regenResult = mockMvc.perform(post("/api/v1/admin/virtual-ids/" + virtualId + "/regenerate-qr")
+                        .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.qrCodeBase64", startsWith("data:image/png;base64,")))
                 .andReturn();

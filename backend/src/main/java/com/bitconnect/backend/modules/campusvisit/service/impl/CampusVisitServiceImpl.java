@@ -46,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +78,15 @@ public class CampusVisitServiceImpl implements CampusVisitService {
         }
 
         if (request.visitDate().isBefore(LocalDate.now())) {
-            throw new BadRequestException("Visit date cannot be in the past.");
+            throw new BadRequestException("Visit date cannot be in the past. Please select today or a future date.");
+        }
+
+        if (request.visitDate().isEqual(LocalDate.now())) {
+            LocalTime now = LocalTime.now();
+            if (request.preferredArrivalTime() == null || !request.preferredArrivalTime().isAfter(now)) {
+                String formattedCurrent = now.truncatedTo(java.time.temporal.ChronoUnit.MINUTES).toString();
+                throw new BadRequestException("For a visit requested for today (" + LocalDate.now() + "), arrival time must be in the future (after current time " + formattedCurrent + ").");
+            }
         }
 
         // Prevent duplicate active visit requests for the same date
@@ -126,12 +135,61 @@ public class CampusVisitServiceImpl implements CampusVisitService {
         // Create initial status history
         recordStatusHistory(savedVisit, null, CampusVisitStatus.PENDING, "Visit request submitted by alumnus", profile.getUser().getId(), profile.getUser().getFullName(), RoleName.ROLE_ALUMNI);
 
+        // Dispatch notification to assigned faculty or department faculty / admins
+        String alumnusName = profile.getUser() != null ? profile.getUser().getFullName() : "Alumnus";
+        if (assignedFaculty != null) {
+            notificationService.sendNotification(
+                    assignedFaculty,
+                    NotificationType.CAMPUS_VISIT_REQUESTED,
+                    "New Campus Visit Request",
+                    String.format("Alumnus %s (%s) requested a campus visit to meet you on %s for: %s",
+                            alumnusName, profile.getRollNumber(), savedVisit.getVisitDate(), savedVisit.getPurpose()),
+                    savedVisit.getId(),
+                    "CAMPUS_VISIT",
+                    "/faculty/campus-visits",
+                    alumnusName
+            );
+        } else if (dept != null) {
+            List<StaffProfile> deptStaff = staffProfileRepository.findByDepartmentId(dept.getId());
+            for (StaffProfile sp : deptStaff) {
+                if (sp.getUser() != null) {
+                    notificationService.sendNotification(
+                            sp.getUser(),
+                            NotificationType.CAMPUS_VISIT_REQUESTED,
+                            "Department Campus Visit Request",
+                            String.format("Alumnus %s (%s) requested a %s campus visit on %s for: %s",
+                                    alumnusName, profile.getRollNumber(), dept.getCode(), savedVisit.getVisitDate(), savedVisit.getPurpose()),
+                            savedVisit.getId(),
+                            "CAMPUS_VISIT",
+                            "/faculty/campus-visits",
+                            alumnusName
+                    );
+                }
+            }
+        } else {
+            // General visit without department -> notify Alumni Association administrators
+            List<User> admins = userRepository.findByRolesName(RoleName.ROLE_ADMIN);
+            for (User admin : admins) {
+                notificationService.sendNotification(
+                        admin,
+                        NotificationType.CAMPUS_VISIT_REQUESTED,
+                        "New Campus Visit Request",
+                        String.format("Alumnus %s (%s) requested a general campus visit on %s for: %s",
+                                alumnusName, profile.getRollNumber(), savedVisit.getVisitDate(), savedVisit.getPurpose()),
+                        savedVisit.getId(),
+                        "CAMPUS_VISIT",
+                        "/admin/campus-visits",
+                        alumnusName
+                );
+            }
+        }
+
         log.info("Submitted new CampusVisit ID: {} for alumnus: {}", savedVisit.getId(), profile.getRollNumber());
         return mapToResponse(savedVisit);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public PagedResponse<CampusVisitResponse> searchAlumniVisits(
             UUID userId,
             CampusVisitStatus status,
@@ -142,6 +200,7 @@ public class CampusVisitServiceImpl implements CampusVisitService {
             String search,
             Pageable pageable
     ) {
+        expireOutdatedVisits();
         AlumniProfile profile = alumniProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("AlumniProfile for user", "userId", userId));
 
@@ -194,8 +253,9 @@ public class CampusVisitServiceImpl implements CampusVisitService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<CampusVisitResponse> getMyVisitRequests(UUID userId) {
+        expireOutdatedVisits();
         AlumniProfile profile = alumniProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("AlumniProfile for user", "userId", userId));
 
@@ -231,7 +291,15 @@ public class CampusVisitServiceImpl implements CampusVisitService {
         }
 
         if (request.visitDate().isBefore(LocalDate.now())) {
-            throw new BadRequestException("Visit date cannot be in the past.");
+            throw new BadRequestException("Visit date cannot be in the past. Please select today or a future date.");
+        }
+
+        if (request.visitDate().isEqual(LocalDate.now())) {
+            LocalTime now = LocalTime.now();
+            if (request.preferredArrivalTime() == null || !request.preferredArrivalTime().isAfter(now)) {
+                String formattedCurrent = now.truncatedTo(java.time.temporal.ChronoUnit.MINUTES).toString();
+                throw new BadRequestException("For a visit requested for today (" + LocalDate.now() + "), arrival time must be in the future (after current time " + formattedCurrent + ").");
+            }
         }
 
         Department dept = null;
@@ -304,7 +372,7 @@ public class CampusVisitServiceImpl implements CampusVisitService {
     // ==========================================
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public PagedResponse<CampusVisitResponse> searchFacultyVisits(
             UUID facultyUserId,
             CampusVisitStatus status,
@@ -316,23 +384,28 @@ public class CampusVisitServiceImpl implements CampusVisitService {
             String scope,
             Pageable pageable
     ) {
+        expireOutdatedVisits();
         Optional<StaffProfile> staffOpt = staffProfileRepository.findByUserId(facultyUserId);
         Integer deptId = staffOpt.map(s -> s.getDepartment() != null ? s.getDepartment().getId() : null).orElse(null);
 
         Specification<CampusVisit> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Scoping: ASSIGNED_TO_ME vs ALL_DEPARTMENT
-            if ("ASSIGNED_TO_ME".equalsIgnoreCase(scope)) {
-                predicates.add(cb.equal(root.get("assignedFaculty").get("id"), facultyUserId));
-            } else {
-                if (deptId != null) {
-                    Predicate deptMatch = cb.equal(root.get("department").get("id"), deptId);
-                    Predicate facMatch = cb.equal(root.get("assignedFaculty").get("id"), facultyUserId);
-                    predicates.add(cb.or(deptMatch, facMatch));
+            jakarta.persistence.criteria.Join<CampusVisit, User> facultyJoin = root.join("assignedFaculty", jakarta.persistence.criteria.JoinType.LEFT);
+            jakarta.persistence.criteria.Join<CampusVisit, AlumniProfile> alumniJoin = root.join("alumniProfile", jakarta.persistence.criteria.JoinType.LEFT);
+            jakarta.persistence.criteria.Join<AlumniProfile, User> alumniUserJoin = alumniJoin.join("user", jakarta.persistence.criteria.JoinType.LEFT);
+
+            // Scoping: ASSIGNED_TO_ME vs ALL_DEPARTMENT (Strictly restricted to faculty's own department)
+            if (deptId != null) {
+                Predicate deptMatch = cb.equal(root.get("department").get("id"), deptId);
+
+                if ("ASSIGNED_TO_ME".equalsIgnoreCase(scope)) {
+                    predicates.add(cb.and(deptMatch, cb.equal(facultyJoin.get("id"), facultyUserId)));
                 } else {
-                    predicates.add(cb.equal(root.get("assignedFaculty").get("id"), facultyUserId));
+                    predicates.add(deptMatch);
                 }
+            } else {
+                predicates.add(cb.equal(facultyJoin.get("id"), facultyUserId));
             }
 
             if (status != null) {
@@ -352,9 +425,9 @@ public class CampusVisitServiceImpl implements CampusVisitService {
             }
             if (search != null && !search.isBlank()) {
                 String term = "%" + search.toLowerCase().trim() + "%";
-                Predicate nameMatch = cb.like(cb.lower(root.get("alumniProfile").get("user").get("fullName")), term);
-                Predicate rollMatch = cb.like(cb.lower(root.get("alumniProfile").get("rollNumber")), term);
-                Predicate regMatch = cb.like(cb.lower(root.get("alumniProfile").get("registerNumber")), term);
+                Predicate nameMatch = cb.like(cb.lower(alumniUserJoin.get("fullName")), term);
+                Predicate rollMatch = cb.like(cb.lower(alumniJoin.get("rollNumber")), term);
+                Predicate regMatch = cb.like(cb.lower(alumniJoin.get("registerNumber")), term);
                 Predicate purposeMatch = cb.like(cb.lower(root.get("purpose")), term);
                 Predicate remarksMatch = cb.like(cb.lower(root.get("adminRemarks")), term);
                 predicates.add(cb.or(nameMatch, rollMatch, regMatch, purposeMatch, remarksMatch));
@@ -379,8 +452,9 @@ public class CampusVisitServiceImpl implements CampusVisitService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<CampusVisitResponse> getPendingVisitsForFaculty(UUID facultyUserId) {
+        expireOutdatedVisits();
         Optional<StaffProfile> staffOpt = staffProfileRepository.findByUserId(facultyUserId);
         Integer deptId = staffOpt.map(s -> s.getDepartment().getId()).orElse(null);
 
@@ -438,11 +512,13 @@ public class CampusVisitServiceImpl implements CampusVisitService {
         // Notify Alumnus
         notificationService.sendNotification(
                 saved.getAlumniProfile().getUser(),
-                NotificationType.VISIT_APPROVED,
+                NotificationType.CAMPUS_VISIT_APPROVED,
                 "Campus Visit Approved",
                 "Your campus visit request for " + saved.getVisitDate() + " has been approved by " + faculty.getFullName() + ".",
                 saved.getId(),
-                "CampusVisit"
+                "CAMPUS_VISIT",
+                "/alumni/campus-visits",
+                faculty.getFullName()
         );
 
         log.info("Faculty {} approved CampusVisit ID: {}", faculty.getEmail(), saved.getId());
@@ -480,11 +556,13 @@ public class CampusVisitServiceImpl implements CampusVisitService {
         // Notify Alumnus
         notificationService.sendNotification(
                 saved.getAlumniProfile().getUser(),
-                NotificationType.VISIT_REJECTED,
+                NotificationType.CAMPUS_VISIT_REJECTED,
                 "Campus Visit Request Rejected",
                 "Your campus visit request for " + saved.getVisitDate() + " was rejected. Reason: " + comment,
                 saved.getId(),
-                "CampusVisit"
+                "CAMPUS_VISIT",
+                "/alumni/campus-visits",
+                faculty.getFullName()
         );
 
         log.info("Faculty {} rejected CampusVisit ID: {}", faculty.getEmail(), saved.getId());
@@ -496,7 +574,7 @@ public class CampusVisitServiceImpl implements CampusVisitService {
     // ==========================================
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public PagedResponse<CampusVisitResponse> searchAdminVisits(
             CampusVisitStatus status,
             CampusVisitType visitType,
@@ -507,8 +585,14 @@ public class CampusVisitServiceImpl implements CampusVisitService {
             String search,
             Pageable pageable
     ) {
+        expireOutdatedVisits();
         Specification<CampusVisit> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            jakarta.persistence.criteria.Join<CampusVisit, Department> deptJoin = root.join("department", jakarta.persistence.criteria.JoinType.LEFT);
+            jakarta.persistence.criteria.Join<CampusVisit, User> facultyJoin = root.join("assignedFaculty", jakarta.persistence.criteria.JoinType.LEFT);
+            jakarta.persistence.criteria.Join<CampusVisit, AlumniProfile> alumniJoin = root.join("alumniProfile", jakarta.persistence.criteria.JoinType.LEFT);
+            jakarta.persistence.criteria.Join<AlumniProfile, User> alumniUserJoin = alumniJoin.join("user", jakarta.persistence.criteria.JoinType.LEFT);
 
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
@@ -517,7 +601,7 @@ public class CampusVisitServiceImpl implements CampusVisitService {
                 predicates.add(cb.equal(root.get("visitType"), visitType));
             }
             if (departmentId != null) {
-                predicates.add(cb.equal(root.get("department").get("id"), departmentId));
+                predicates.add(cb.equal(deptJoin.get("id"), departmentId));
             }
             if (visitDate != null) {
                 predicates.add(cb.equal(root.get("visitDate"), visitDate));
@@ -530,12 +614,12 @@ public class CampusVisitServiceImpl implements CampusVisitService {
             }
             if (search != null && !search.isBlank()) {
                 String term = "%" + search.toLowerCase().trim() + "%";
-                Predicate nameMatch = cb.like(cb.lower(root.get("alumniProfile").get("user").get("fullName")), term);
-                Predicate rollMatch = cb.like(cb.lower(root.get("alumniProfile").get("rollNumber")), term);
-                Predicate regMatch = cb.like(cb.lower(root.get("alumniProfile").get("registerNumber")), term);
+                Predicate nameMatch = cb.like(cb.lower(alumniUserJoin.get("fullName")), term);
+                Predicate rollMatch = cb.like(cb.lower(alumniJoin.get("rollNumber")), term);
+                Predicate regMatch = cb.like(cb.lower(alumniJoin.get("registerNumber")), term);
                 Predicate purposeMatch = cb.like(cb.lower(root.get("purpose")), term);
-                Predicate deptMatch = cb.like(cb.lower(root.get("department").get("name")), term);
-                Predicate facMatch = cb.like(cb.lower(root.get("assignedFaculty").get("fullName")), term);
+                Predicate deptMatch = cb.like(cb.lower(deptJoin.get("name")), term);
+                Predicate facMatch = cb.like(cb.lower(facultyJoin.get("fullName")), term);
                 Predicate remarksMatch = cb.like(cb.lower(root.get("adminRemarks")), term);
                 predicates.add(cb.or(nameMatch, rollMatch, regMatch, purposeMatch, deptMatch, facMatch, remarksMatch));
             }
@@ -605,11 +689,13 @@ public class CampusVisitServiceImpl implements CampusVisitService {
         // Notify Alumnus
         notificationService.sendNotification(
                 saved.getAlumniProfile().getUser(),
-                NotificationType.VISIT_APPROVED,
+                NotificationType.CAMPUS_VISIT_APPROVED,
                 "Campus Visit Approved",
                 "Your campus visit request for " + saved.getVisitDate() + " has been approved by the Alumni Administration.",
                 saved.getId(),
-                "CampusVisit"
+                "CAMPUS_VISIT",
+                "/alumni/campus-visits",
+                admin.getFullName()
         );
 
         log.info("Admin {} approved CampusVisit ID: {}", admin.getEmail(), saved.getId());
@@ -645,11 +731,13 @@ public class CampusVisitServiceImpl implements CampusVisitService {
         // Notify Alumnus
         notificationService.sendNotification(
                 saved.getAlumniProfile().getUser(),
-                NotificationType.VISIT_REJECTED,
+                NotificationType.CAMPUS_VISIT_REJECTED,
                 "Campus Visit Request Rejected",
                 "Your campus visit request for " + saved.getVisitDate() + " was rejected. Reason: " + comment,
                 saved.getId(),
-                "CampusVisit"
+                "CAMPUS_VISIT",
+                "/alumni/campus-visits",
+                admin.getFullName()
         );
 
         log.info("Admin {} rejected CampusVisit ID: {}", admin.getEmail(), saved.getId());
@@ -682,11 +770,13 @@ public class CampusVisitServiceImpl implements CampusVisitService {
         // Notify Alumnus
         notificationService.sendNotification(
                 saved.getAlumniProfile().getUser(),
-                NotificationType.VISIT_SCHEDULED,
+                NotificationType.CAMPUS_VISIT_SCHEDULED,
                 "Campus Visit Finalized & Scheduled",
                 "Your visit for " + saved.getVisitDate() + " is scheduled for " + request.approvedArrivalTime() + " at " + request.meetingLocation() + ".",
                 saved.getId(),
-                "CampusVisit"
+                "CAMPUS_VISIT",
+                "/alumni/campus-visits",
+                admin.getFullName()
         );
 
         log.info("Admin {} scheduled CampusVisit ID: {}", admin.getEmail(), saved.getId());
@@ -694,21 +784,49 @@ public class CampusVisitServiceImpl implements CampusVisitService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CampusVisitStatsResponse getAdminStats() {
+        expireOutdatedVisits();
         long pending = campusVisitRepository.countByStatus(CampusVisitStatus.PENDING);
         long approved = campusVisitRepository.countByStatus(CampusVisitStatus.APPROVED);
         long scheduled = campusVisitRepository.countByStatus(CampusVisitStatus.SCHEDULED);
         long completed = campusVisitRepository.countByStatus(CampusVisitStatus.COMPLETED);
         long rejected = campusVisitRepository.countByStatus(CampusVisitStatus.REJECTED);
         long cancelled = campusVisitRepository.countByStatus(CampusVisitStatus.CANCELLED);
+        long expired = campusVisitRepository.countByStatus(CampusVisitStatus.EXPIRED);
         long total = campusVisitRepository.count();
         long todaysVisits = campusVisitRepository.countByVisitDateAndStatusIn(
                 LocalDate.now(),
                 List.of(CampusVisitStatus.APPROVED, CampusVisitStatus.SCHEDULED)
         );
 
-        return new CampusVisitStatsResponse(total, pending, approved, scheduled, completed, rejected, cancelled, todaysVisits);
+        return new CampusVisitStatsResponse(total, pending, approved, scheduled, completed, rejected, cancelled, expired, todaysVisits);
+    }
+
+    @Override
+    @Transactional
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 0/15 * * * *")
+    public int expireOutdatedVisits() {
+        LocalDate today = LocalDate.now();
+        List<CampusVisit> outdatedVisits = campusVisitRepository.findByVisitDateBeforeAndStatusIn(
+                today,
+                List.of(CampusVisitStatus.PENDING, CampusVisitStatus.APPROVED, CampusVisitStatus.SCHEDULED)
+        );
+        for (CampusVisit visit : outdatedVisits) {
+            CampusVisitStatus oldStatus = visit.getStatus();
+            visit.setStatus(CampusVisitStatus.EXPIRED);
+            if (visit.getAdminRemarks() == null || visit.getAdminRemarks().isBlank()) {
+                visit.setAdminRemarks("Visit expired automatically as scheduled visit date (" + visit.getVisitDate() + ") has completed.");
+            }
+            campusVisitRepository.save(visit);
+            recordStatusHistory(visit, oldStatus, CampusVisitStatus.EXPIRED,
+                    "Visit expired automatically as scheduled date " + visit.getVisitDate() + " has completed without gate check-in",
+                    null, "SYSTEM", RoleName.ROLE_ADMIN);
+        }
+        if (!outdatedVisits.isEmpty()) {
+            log.info("Automatically expired {} past campus visit requests prior to {}", outdatedVisits.size(), today);
+        }
+        return outdatedVisits.size();
     }
 
     // ==========================================
@@ -721,7 +839,7 @@ public class CampusVisitServiceImpl implements CampusVisitService {
             return;
         }
 
-        // Check if reviewing faculty's department matches visit's department or assigned faculty's department
+        // Check if reviewing faculty's department matches visit's department or alumni's department
         Optional<StaffProfile> staffOpt = staffProfileRepository.findByUserId(facultyUserId);
         if (staffOpt.isPresent() && staffOpt.get().getDepartment() != null) {
             Integer facultyDeptId = staffOpt.get().getDepartment().getId();
@@ -731,13 +849,10 @@ public class CampusVisitServiceImpl implements CampusVisitService {
                 return;
             }
 
-            // Match assigned faculty's department
-            if (visit.getAssignedFaculty() != null) {
-                Optional<StaffProfile> assignedStaffOpt = staffProfileRepository.findByUserId(visit.getAssignedFaculty().getId());
-                if (assignedStaffOpt.isPresent() && assignedStaffOpt.get().getDepartment() != null &&
-                        facultyDeptId.equals(assignedStaffOpt.get().getDepartment().getId())) {
-                    return;
-                }
+            // Match alumni's department
+            if (visit.getAlumniProfile() != null && visit.getAlumniProfile().getDepartment() != null &&
+                    facultyDeptId.equals(visit.getAlumniProfile().getDepartment().getId())) {
+                return;
             }
         }
 
@@ -758,15 +873,17 @@ public class CampusVisitServiceImpl implements CampusVisitService {
         }
     }
 
+    private static final UUID SYSTEM_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
     private void recordStatusHistory(CampusVisit visit, CampusVisitStatus oldStatus, CampusVisitStatus newStatus, String comment, UUID changedBy, String changedByName, RoleName changedByRole) {
         CampusVisitStatusHistory history = CampusVisitStatusHistory.builder()
                 .campusVisit(visit)
                 .oldStatus(oldStatus)
                 .newStatus(newStatus)
                 .comment(comment)
-                .changedBy(changedBy)
-                .changedByName(changedByName)
-                .changedByRole(changedByRole)
+                .changedBy(changedBy != null ? changedBy : SYSTEM_USER_ID)
+                .changedByName(changedByName != null ? changedByName : "SYSTEM")
+                .changedByRole(changedByRole != null ? changedByRole : RoleName.ROLE_ADMIN)
                 .build();
         statusHistoryRepository.save(history);
     }

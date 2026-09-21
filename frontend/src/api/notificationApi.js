@@ -1,8 +1,16 @@
 import axiosClient from './axiosClient';
 
 export const notificationApi = {
-  getMyNotifications: (params) =>
-    axiosClient.get('/notifications', { params }),
+  getNotifications: ({ page = 0, size = 20, isRead = null } = {}) => {
+    const params = { page, size };
+    if (isRead !== null && isRead !== undefined) {
+      params.isRead = isRead;
+    }
+    return axiosClient.get('/notifications', { params });
+  },
+
+  getRecentNotifications: (limit = 8) =>
+    axiosClient.get('/notifications/recent', { params: { limit } }),
 
   getUnreadCount: () =>
     axiosClient.get('/notifications/unread-count'),
@@ -13,3 +21,5 @@ export const notificationApi = {
   markAllAsRead: () =>
     axiosClient.patch('/notifications/read-all'),
 };
+
+export default notificationApi;

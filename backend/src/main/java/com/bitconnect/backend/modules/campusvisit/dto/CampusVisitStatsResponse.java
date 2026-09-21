@@ -8,6 +8,8 @@ public record CampusVisitStatsResponse(
         long completed,
         long rejected,
         long cancelled,
+        long expired,
         long todaysVisits
 ) {
 }
+

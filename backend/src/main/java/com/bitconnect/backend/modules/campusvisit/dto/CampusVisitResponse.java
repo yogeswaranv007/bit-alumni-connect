@@ -48,8 +48,8 @@ public record CampusVisitResponse(
             List<CampusVisitTimelineItem> timeline
     ) {
         Integer deptId = cv.getDepartment() != null ? cv.getDepartment().getId() : null;
-        String deptName = cv.getDepartment() != null ? cv.getDepartment().getName() : null;
-        String deptCode = cv.getDepartment() != null ? cv.getDepartment().getCode() : null;
+        String deptName = cv.getDepartment() != null ? cv.getDepartment().getName() : "Alumni Association";
+        String deptCode = cv.getDepartment() != null ? cv.getDepartment().getCode() : "AA";
 
         UUID facId = cv.getAssignedFaculty() != null ? cv.getAssignedFaculty().getId() : null;
         String facName = cv.getAssignedFaculty() != null ? cv.getAssignedFaculty().getFullName() : null;

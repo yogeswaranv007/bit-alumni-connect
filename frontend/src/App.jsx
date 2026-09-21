@@ -14,6 +14,7 @@ import DistinguishedAlumniPage from './pages/public/DistinguishedAlumniPage';
 import NewsletterPage from './pages/public/NewsletterPage';
 import GraduationRegistrationPage from './pages/public/GraduationRegistrationPage';
 import ResourcesPage from './pages/public/ResourcesPage';
+import { NotificationsPage } from './pages/common/NotificationsPage';
 
 // Auth & Verification Pages
 import { LoginPage } from './pages/public/LoginPage';
@@ -58,6 +59,14 @@ export const App = () => {
         <Route path="/newsletter" element={<NewsletterPage />} />
         <Route path="/graduation-registration" element={<GraduationRegistrationPage />} />
         <Route path="/resources" element={<ResourcesPage />} />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* Standalone Auth & Verification Routes */}
@@ -96,6 +105,7 @@ export const App = () => {
         }
       >
         <Route path="campus-visits" element={<FacultyCampusVisits />} />
+        <Route path="campus-entry-logs" element={<AdminCampusEntryLogs />} />
         <Route index element={<Navigate to="/faculty/campus-visits" replace />} />
       </Route>
 
