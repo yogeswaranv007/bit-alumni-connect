@@ -25,7 +25,6 @@ import {
 export const DigitalIdPage = () => {
   const [cardData, setCardData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [regenerating, setRegenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadType, setDownloadType] = useState('');
   const [notification, setNotification] = useState('');
@@ -53,27 +52,6 @@ export const DigitalIdPage = () => {
   useEffect(() => {
     fetchCard();
   }, []);
-
-  const handleRegenerateQr = async () => {
-    const confirmed = window.confirm(
-      'Regenerating your QR code will immediately invalidate all existing screenshots and previous tokens. Do you want to proceed?'
-    );
-    if (!confirmed) return;
-
-    setRegenerating(true);
-    setNotification('');
-    try {
-      const res = await virtualIdApi.regenerateMyQr();
-      if (res.success && res.data) {
-        setCardData(res.data);
-        setNotification('QR code token rotated successfully. Old screenshots/tokens are now revoked.');
-      }
-    } catch (err) {
-      alert('Failed to regenerate QR code: ' + (err.message || 'Server error'));
-    } finally {
-      setRegenerating(false);
-    }
-  };
 
   // Download ID as High-Resolution Image (PNG)
   const handleDownloadImage = async (mode = 'both') => {
@@ -397,8 +375,6 @@ export const DigitalIdPage = () => {
         {/* 3D Card */}
         <DigitalIdCard
           cardData={cardData}
-          onRegenerateQr={handleRegenerateQr}
-          regenerating={regenerating}
           isFlipped={isFlipped}
           onFlipChange={setIsFlipped}
         />
@@ -418,7 +394,7 @@ export const DigitalIdPage = () => {
               <span>Public Verification Endpoint</span>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              When security staff or attendees scan the dynamic QR code on the card, they are directed to the secure BIT registry verification page confirming your verified alumnus status.
+              When security staff or attendees scan the official QR code on the card, they are directed to the secure BIT registry verification page confirming your official verified alumnus status.
             </p>
           </div>
 
@@ -439,10 +415,10 @@ export const DigitalIdPage = () => {
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
           <div className="flex items-center space-x-2 text-xs font-extrabold uppercase tracking-wider text-emerald-700">
             <ShieldCheck className="w-4 h-4" />
-            <span>Zero-PII Dynamic Token Security</span>
+            <span>Permanent & Stable Identity Verification</span>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Your QR code does not embed unencrypted personal data. If you share a screenshot or lose a badge, click <strong>"Regenerate QR Code"</strong> to instantly invalidate old verification tokens while keeping your permanent Alumni ID intact.
+            Your QR code embeds a tamper-proof cryptographic token tied to your official permanent Alumni ID (<strong className="font-mono text-emerald-950">{cardData.alumniIdCardNumber}</strong>) for stable and consistent verification. QR code modifications are exclusively governed by college administrators.
           </p>
         </div>
       </div>

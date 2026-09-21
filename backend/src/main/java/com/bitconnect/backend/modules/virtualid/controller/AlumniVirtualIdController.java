@@ -38,14 +38,4 @@ public class AlumniVirtualIdController {
         VirtualIdCardResponse response = virtualIdService.getMyVirtualId(currentUserId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-
-    @PostMapping("/regenerate-qr")
-    @PreAuthorize("hasRole('ALUMNI')")
-    @Operation(summary = "Regenerate active QR verification token", description = "Revokes previous QR token and generates a new active token with fresh QR code image")
-    public ResponseEntity<ApiResponse<VirtualIdCardResponse>> regenerateMyQrCode() {
-        UUID currentUserId = SecurityUtils.getCurrentUserId();
-        VirtualIdCardResponse currentCard = virtualIdService.getMyVirtualId(currentUserId);
-        VirtualIdCardResponse response = virtualIdService.regenerateQrToken(currentCard.id(), currentUserId);
-        return ResponseEntity.ok(ApiResponse.success("QR verification token regenerated successfully", response));
-    }
 }

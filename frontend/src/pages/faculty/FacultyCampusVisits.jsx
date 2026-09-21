@@ -275,6 +275,18 @@ export const FacultyCampusVisits = () => {
         </button>
 
         <button
+          onClick={() => { setFilterStatus('EXPIRED'); setCurrentPage(0); }}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+            filterStatus === 'EXPIRED'
+              ? 'bg-zinc-700 text-white shadow-sm shadow-zinc-700/20'
+              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          <span>Expired</span>
+        </button>
+
+        <button
           onClick={() => { setFilterStatus(''); setCurrentPage(0); }}
           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
             filterStatus === ''
@@ -282,7 +294,7 @@ export const FacultyCampusVisits = () => {
               : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
           }`}
         >
-          <span>All Department Requests</span>
+          <span>All Statuses (My Department)</span>
         </button>
       </div>
 
@@ -328,7 +340,7 @@ export const FacultyCampusVisits = () => {
               onChange={(e) => { setFilterScope(e.target.value); setCurrentPage(0); }}
               className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-700 font-medium focus:outline-none focus:border-indigo-600 focus:bg-white"
             >
-              <option value="ALL_DEPARTMENT">Entire Department</option>
+              <option value="ALL_DEPARTMENT">My Department Queue</option>
               <option value="ASSIGNED_TO_ME">Assigned to Me Only</option>
             </select>
           </div>
@@ -470,6 +482,8 @@ export const FacultyCampusVisits = () => {
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : visit.status === 'PENDING'
                           ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : visit.status === 'EXPIRED'
+                          ? 'bg-zinc-100 text-zinc-500 border border-zinc-200'
                           : visit.status === 'REJECTED'
                           ? 'bg-rose-50 text-rose-700 border border-rose-200'
                           : 'bg-slate-100 text-slate-600'

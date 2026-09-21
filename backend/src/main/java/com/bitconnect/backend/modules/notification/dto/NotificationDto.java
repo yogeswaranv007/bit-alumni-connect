@@ -13,10 +13,14 @@ public record NotificationDto(
         String message,
         UUID referenceId,
         String referenceType,
+        String actionUrl,
+        String actorName,
         boolean isRead,
+        Instant readAt,
         Instant createdAt
 ) {
     public static NotificationDto from(Notification n) {
+        if (n == null) return null;
         return new NotificationDto(
                 n.getId(),
                 n.getType(),
@@ -24,7 +28,10 @@ public record NotificationDto(
                 n.getMessage(),
                 n.getReferenceId(),
                 n.getReferenceType(),
+                n.getActionUrl(),
+                n.getActorName(),
                 n.isRead(),
+                n.getReadAt(),
                 n.getCreatedAt()
         );
     }

@@ -79,7 +79,7 @@ export const AlumniCampusVisits = () => {
     preferredArrivalTime: '10:30:00',
     visitType: 'FACULTY_MEETING',
     purpose: '',
-    departmentId: '1',
+    departmentId: '',
     assignedFaculty: '',
     associatedEventId: '',
     remarks: '',
@@ -174,11 +174,44 @@ export const AlumniCampusVisits = () => {
       )
     : null;
 
+  const getTodayDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getMinTimeStringForToday = () => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 1);
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     setSuccess(null);
+
+    const todayStr = getTodayDateString();
+    if (formData.visitDate < todayStr) {
+      setError('Visit date cannot be in the past. Please select today or a future date.');
+      setSubmitting(false);
+      return;
+    }
+
+    if (formData.visitDate === todayStr) {
+      const minTime = getMinTimeStringForToday();
+      const enteredTime = formData.preferredArrivalTime ? formData.preferredArrivalTime.substring(0, 5) : '';
+      if (!enteredTime || enteredTime < minTime) {
+        setError(`For today's visit (${todayStr}), the arrival time must be in the future (after ${minTime}).`);
+        setSubmitting(false);
+        return;
+      }
+    }
 
     try {
       const payload = {
@@ -201,7 +234,7 @@ export const AlumniCampusVisits = () => {
           preferredArrivalTime: '10:30:00',
           visitType: 'FACULTY_MEETING',
           purpose: '',
-          departmentId: '1',
+          departmentId: '',
           assignedFaculty: '',
           associatedEventId: '',
           remarks: '',
@@ -527,6 +560,7 @@ export const AlumniCampusVisits = () => {
               <option value="APPROVED">Approved</option>
               <option value="PENDING">Pending Review</option>
               <option value="SCHEDULED">Scheduled</option>
+              <option value="EXPIRED">Expired</option>
               <option value="REJECTED">Rejected</option>
               <option value="CANCELLED">Cancelled</option>
               <option value="COMPLETED">Completed</option>
@@ -675,6 +709,8 @@ export const AlumniCampusVisits = () => {
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : visit.status === 'PENDING'
                           ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : visit.status === 'EXPIRED'
+                          ? 'bg-zinc-100 text-zinc-500 border border-zinc-200'
                           : visit.status === 'REJECTED'
                           ? 'bg-rose-50 text-rose-700 border border-rose-200'
                           : 'bg-slate-100 text-slate-600'
@@ -712,6 +748,17 @@ export const AlumniCampusVisits = () => {
                       <div className="p-2 rounded-lg bg-bit-50 border border-bit-100 text-[11px] text-bit-900 flex items-center space-x-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-bit-700 flex-shrink-0" />
                         <span>Linked Event: <strong>{visit.associatedEventTitle}</strong></span>
+                      </div>
+                    )}
+
+                    {/* Expired status comment */}
+                    {visit.status === 'EXPIRED' && (
+                      <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200 text-[11px] text-zinc-600 space-y-1">
+                        <p className="font-bold flex items-center space-x-1 text-zinc-700">
+                          <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                          <span>Request Expired</span>
+                        </p>
+                        <p>{visit.adminRemarks || `This campus visit request expired as the scheduled visit date (${visit.visitDate}) has completed.`}</p>
                       </div>
                     )}
 
@@ -1063,24 +1110,33 @@ export const AlumniCampusVisits = () => {
                   <input
                     type="date"
                     required
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getTodayDateString()}
                     value={formData.visitDate}
                     onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-bit-600"
                   />
+                  <p className="text-[10px] text-slate-400">
+                    Visit requests can only be made for today or future dates.
+                  </p>
                 </div>
 
                 <div className="space-y-1">
                   <label className="block text-xs font-bold text-slate-700 uppercase">
-                    Preferred Time *
+                    Preferred Arrival Time *
                   </label>
                   <input
                     type="time"
                     required
+                    min={formData.visitDate === getTodayDateString() ? getMinTimeStringForToday() : undefined}
                     value={formData.preferredArrivalTime}
                     onChange={(e) => setFormData({ ...formData, preferredArrivalTime: e.target.value })}
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-bit-600"
                   />
+                  {formData.visitDate === getTodayDateString() && (
+                    <p className="text-[10px] text-amber-600 font-semibold">
+                      For today's visit, time must be after {getMinTimeStringForToday()}.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1126,6 +1182,7 @@ export const AlumniCampusVisits = () => {
                     onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-bit-600"
                   >
+                    <option value="">Alumni Association (General / Institutional Visit)</option>
                     {departments && departments.length > 0 ? (
                       departments.map((dept) => (
                         <option key={dept.id} value={dept.id}>

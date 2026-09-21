@@ -19,6 +19,9 @@ import com.bitconnect.backend.modules.user.repository.UserRepository;
 import com.bitconnect.backend.modules.virtualid.entity.VirtualAlumniId;
 import com.bitconnect.backend.modules.virtualid.repository.VirtualAlumniIdRepository;
 import com.bitconnect.backend.modules.virtualid.service.VirtualIdService;
+import com.bitconnect.backend.modules.notification.entity.NotificationType;
+import com.bitconnect.backend.modules.notification.service.NotificationService;
+import com.bitconnect.backend.modules.user.entity.RoleName;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +47,7 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
     private final DepartmentRepository departmentRepository;
     private final VirtualIdService virtualIdService;
     private final VirtualAlumniIdRepository virtualAlumniIdRepository;
+    private final NotificationService notificationService;
 
     private AlumniProfileResponse toProfileResponse(AlumniProfile profile) {
         if (profile == null) return null;
@@ -108,6 +112,21 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
 
         AlumniProfile savedProfile = alumniProfileRepository.save(profile);
         log.info("Alumni profile created with ID: {} for user: {}", savedProfile.getId(), user.getEmail());
+
+        // Notify administrators of new alumni verification submission
+        List<User> admins = userRepository.findByRolesName(RoleName.ROLE_ADMIN);
+        for (User admin : admins) {
+            notificationService.sendNotification(
+                    admin,
+                    NotificationType.NEW_ALUMNI_VERIFICATION,
+                    "New Alumni Verification Request",
+                    String.format("%s (%s) submitted academic profile for identity verification.", user.getFullName(), savedProfile.getRegisterNumber()),
+                    savedProfile.getId(),
+                    "ALUMNI_PROFILE",
+                    "/admin/alumni",
+                    user.getFullName()
+            );
+        }
 
         return toProfileResponse(savedProfile);
     }
@@ -331,6 +350,19 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
         // Automatically issue Virtual Alumni ID upon verification
         virtualIdService.issueVirtualId(verifiedProfile);
 
+        // Notify the alumnus of identity verification
+        if (verifiedProfile.getUser() != null) {
+            notificationService.sendNotification(
+                    verifiedProfile.getUser(),
+                    NotificationType.ALUMNI_VERIFIED,
+                    "Alumni Identity Verified",
+                    "Congratulations! Your BIT Alumni profile has been officially verified by the administrator.",
+                    verifiedProfile.getId(),
+                    "ALUMNI_PROFILE",
+                    "/alumni/virtual-id"
+            );
+        }
+
         return toProfileResponse(verifiedProfile);
     }
 
@@ -351,6 +383,20 @@ public class AlumniProfileServiceImpl implements AlumniProfileService {
 
         AlumniProfile rejectedProfile = alumniProfileRepository.save(profile);
         log.info("Alumni profile ID: {} rejected by admin ID: {} with reason: {}", id, adminId, request.reason());
+
+        // Notify the alumnus of verification rejection
+        if (rejectedProfile.getUser() != null) {
+            notificationService.sendNotification(
+                    rejectedProfile.getUser(),
+                    NotificationType.ALUMNI_REJECTED,
+                    "Alumni Profile Verification Rejected",
+                    "Your verification request was rejected: " + request.reason().trim(),
+                    rejectedProfile.getId(),
+                    "ALUMNI_PROFILE",
+                    "/alumni/create-profile"
+            );
+        }
+
         return toProfileResponse(rejectedProfile);
     }
 }

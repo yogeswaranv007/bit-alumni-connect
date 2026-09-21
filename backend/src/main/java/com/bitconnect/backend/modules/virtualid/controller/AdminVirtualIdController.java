@@ -63,4 +63,14 @@ public class AdminVirtualIdController {
         VirtualIdCardResponse response = virtualIdService.regenerateQrToken(id, adminId);
         return ResponseEntity.ok(ApiResponse.success("QR verification token regenerated successfully", response));
     }
+
+    @PostMapping("/by-alumni/{alumniProfileId}/regenerate-qr")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Admin force QR token regeneration by Alumni Profile ID", description = "Force revokes current QR token and generates a new active token for the given Alumni Profile")
+    public ResponseEntity<ApiResponse<VirtualIdCardResponse>> regenerateQrCodeByAlumniId(
+            @PathVariable UUID alumniProfileId) {
+        UUID adminId = SecurityUtils.getCurrentUserId();
+        VirtualIdCardResponse response = virtualIdService.regenerateQrTokenByAlumniProfileId(alumniProfileId, adminId);
+        return ResponseEntity.ok(ApiResponse.success("QR verification token regenerated successfully for alumnus", response));
+    }
 }

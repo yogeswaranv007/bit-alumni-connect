@@ -19,6 +19,7 @@ public interface CampusEntryLogService {
     List<GateLogDto> getTodayLogs();
 
     PagedResponse<GateLogDto> searchEntryLogs(
+            UUID currentUserId,
             LocalDate startDate,
             LocalDate endDate,
             LocalDate entryDate,
@@ -30,5 +31,5 @@ public interface CampusEntryLogService {
             Pageable pageable
     );
 
-    GateLogDto getEntryLogById(UUID id);
+    GateLogDto getEntryLogById(UUID id, UUID currentUserId);
 }

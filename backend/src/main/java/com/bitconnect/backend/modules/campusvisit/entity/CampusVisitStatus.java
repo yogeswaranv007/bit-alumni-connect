@@ -6,5 +6,7 @@ public enum CampusVisitStatus {
     REJECTED,
     SCHEDULED,
     COMPLETED,
-    CANCELLED
+    CANCELLED,
+    EXPIRED
 }
+
