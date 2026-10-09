@@ -1,7 +1,10 @@
 package com.bitconnect.backend.auth;
 
+import com.bitconnect.backend.modules.auth.dto.AlumniRegisterRequest;
 import com.bitconnect.backend.modules.auth.dto.LoginRequest;
-import com.bitconnect.backend.modules.auth.dto.RegisterRequest;
+import com.bitconnect.backend.modules.institutional.entity.CollegeAlumniRecord;
+import com.bitconnect.backend.modules.institutional.entity.CollegeRecordStatus;
+import com.bitconnect.backend.modules.institutional.repository.CollegeAlumniRecordRepository;
 import com.bitconnect.backend.modules.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
@@ -37,6 +42,9 @@ class AuthControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CollegeAlumniRecordRepository collegeAlumniRecordRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
@@ -48,11 +56,29 @@ class AuthControllerTest {
                 .build();
     }
 
+    private void seedMockAlumniRecord(String regNo, String name, LocalDate dob) {
+        collegeAlumniRecordRepository.save(CollegeAlumniRecord.builder()
+                .institutionalRecordId("REC-" + regNo)
+                .registerNumber(regNo)
+                .name(name)
+                .dateOfBirth(dob)
+                .degree("B.Tech")
+                .departmentCode("IT")
+                .graduationYear(2022)
+                .recordStatus(CollegeRecordStatus.ACTIVE)
+                .build());
+    }
+
     @Test
     @DisplayName("Should successfully register alumni user, assign ROLE_ALUMNI, and return JWT")
     void testRegisterSuccess() throws Exception {
         String uniqueEmail = "alumni." + System.currentTimeMillis() + "@bitsathy.ac.in";
-        RegisterRequest request = new RegisterRequest("Kavitha Raman", uniqueEmail, "Password@123");
+        String regNo = "TEST-REG-" + System.currentTimeMillis();
+        LocalDate dob = LocalDate.of(2000, 5, 15);
+        seedMockAlumniRecord(regNo, "Kavitha Raman", dob);
+
+        AlumniRegisterRequest request = new AlumniRegisterRequest(
+                uniqueEmail, "Password@123", regNo, "Kavitha Raman", dob);
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -71,27 +97,37 @@ class AuthControllerTest {
     @DisplayName("Should reject registration with duplicate email (HTTP 400)")
     void testRegisterDuplicateEmail() throws Exception {
         String uniqueEmail = "dup." + System.currentTimeMillis() + "@bitsathy.ac.in";
-        RegisterRequest request = new RegisterRequest("Duplicate User", uniqueEmail, "Password@123");
+        String regNo1 = "TEST-DUP1-" + System.currentTimeMillis();
+        String regNo2 = "TEST-DUP2-" + System.currentTimeMillis();
+        LocalDate dob = LocalDate.of(2000, 1, 1);
+        seedMockAlumniRecord(regNo1, "Duplicate User", dob);
+        seedMockAlumniRecord(regNo2, "Duplicate User", dob);
+
+        AlumniRegisterRequest request1 = new AlumniRegisterRequest(
+                uniqueEmail, "Password@123", regNo1, "Duplicate User", dob);
+        AlumniRegisterRequest request2 = new AlumniRegisterRequest(
+                uniqueEmail, "Password@123", regNo2, "Duplicate User", dob);
 
         // First registration
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request1)))
                 .andExpect(status().isCreated());
 
         // Second registration with same email
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request2)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success", is(false)))
-                .andExpect(jsonPath("$.message", containsString("already in use")));
+                .andExpect(jsonPath("$.message", containsString("already exists")));
     }
 
     @Test
     @DisplayName("Should reject invalid registration payload with validation errors (HTTP 400)")
     void testRegisterInvalidPayload() throws Exception {
-        RegisterRequest invalidRequest = new RegisterRequest("", "not-an-email", "short");
+        AlumniRegisterRequest invalidRequest = new AlumniRegisterRequest(
+                "not-an-email", "short", "", "", null);
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +142,12 @@ class AuthControllerTest {
     @DisplayName("Should login successfully with valid credentials and return JWT")
     void testLoginSuccess() throws Exception {
         String email = "login." + System.currentTimeMillis() + "@bitsathy.ac.in";
-        RegisterRequest registerRequest = new RegisterRequest("Login Test", email, "SecurePass@123");
+        String regNo = "TEST-LOG-" + System.currentTimeMillis();
+        LocalDate dob = LocalDate.of(2000, 2, 2);
+        seedMockAlumniRecord(regNo, "Login Test", dob);
+
+        AlumniRegisterRequest registerRequest = new AlumniRegisterRequest(
+                email, "SecurePass@123", regNo, "Login Test", dob);
 
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -141,7 +182,12 @@ class AuthControllerTest {
     @DisplayName("Should fetch current user profile with valid Bearer JWT")
     void testGetCurrentUserWithValidToken() throws Exception {
         String email = "me." + System.currentTimeMillis() + "@bitsathy.ac.in";
-        RegisterRequest registerRequest = new RegisterRequest("Current User Test", email, "SecurePass@123");
+        String regNo = "TEST-ME-" + System.currentTimeMillis();
+        LocalDate dob = LocalDate.of(2000, 3, 3);
+        seedMockAlumniRecord(regNo, "Current User Test", dob);
+
+        AlumniRegisterRequest registerRequest = new AlumniRegisterRequest(
+                email, "SecurePass@123", regNo, "Current User Test", dob);
 
         MvcResult registerResult = mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

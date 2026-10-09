@@ -79,16 +79,21 @@ class ProfileChangeRequestIntegrationTest {
                 .build();
     }
 
-    private String createAlumniAndGetToken(String email, String name) throws Exception {
-        RegisterRequest registerRequest = new RegisterRequest(name, email, "Password@123");
-        MvcResult result = mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(registerRequest)))
-                .andExpect(status().isCreated())
-                .andReturn();
+    private String createAlumniAndGetToken(String email, String name) {
+        Role alumniRole = roleRepository.findByName(RoleName.ROLE_ALUMNI)
+                .orElseGet(() -> roleRepository.save(new Role(RoleName.ROLE_ALUMNI)));
 
-        JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
-        return root.path("data").path("accessToken").asText();
+        User alumni = User.builder()
+                .email(email)
+                .fullName(name)
+                .password(passwordEncoder.encode("Password@123"))
+                .isActive(true)
+                .roles(new HashSet<>(Set.of(alumniRole)))
+                .build();
+
+        User savedAlumni = userRepository.save(alumni);
+        UserPrincipal principal = UserPrincipal.create(savedAlumni);
+        return jwtTokenProvider.generateTokenFromUser(principal);
     }
 
     private String createAdminAndGetToken() {

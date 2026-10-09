@@ -10,6 +10,11 @@ export const StatusBadge = ({ status, size = 'sm' }) => {
       bg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       icon: CheckCircle2,
     },
+    APPROVED: {
+      label: 'Approved',
+      bg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      icon: CheckCircle2,
+    },
     ACTIVE: {
       label: 'Active',
       bg: 'bg-teal-50 text-teal-700 border-teal-200',
