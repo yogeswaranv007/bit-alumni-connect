@@ -13,11 +13,13 @@ import {
   ClipboardList,
   Radio,
   Clock,
-  Scan
+  Scan,
+  MessageSquare,
+  GraduationCap
 } from 'lucide-react';
 
 export const Sidebar = ({ isOpen, onClose }) => {
-  const { isAlumni, isAdmin, isStaff, isAdminOnly, isWatchman } = useAuth();
+  const { isAlumni, isAdmin, isStaff, isAdminOnly, isWatchman, isStudent } = useAuth();
   const [pendingSummary, setPendingSummary] = useState(null);
 
   useEffect(() => {
@@ -39,18 +41,28 @@ export const Sidebar = ({ isOpen, onClose }) => {
     }
   };
 
+  const studentLinks = [
+    { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
+    { name: 'Community Forum', path: '/student/community', icon: MessageSquare },
+    { name: 'Alumni Directory', path: '/directory', icon: Users },
+    { name: 'Digital Student ID', path: '/student/digital-id', icon: CreditCard },
+    { name: 'My Profile', path: '/student/profile', icon: User },
+  ];
+
   const alumniLinks = [
     { name: 'Dashboard', path: '/alumni/dashboard', icon: LayoutDashboard },
     { name: 'Campus Visit Pass', path: '/alumni/campus-visits', icon: CalendarCheck },
     { name: 'Digital Alumni ID', path: '/alumni/virtual-id', icon: CreditCard },
     { name: 'My Profile', path: '/alumni/profile', icon: User },
     { name: 'Alumni Directory', path: '/directory', icon: Users },
+    { name: 'Community Forum', path: '/alumni/community', icon: MessageSquare },
   ];
 
   const staffLinks = [
     { name: 'Faculty Approvals', path: '/faculty/campus-visits', icon: CalendarCheck, badge: pendingSummary?.pendingCampusVisits },
     { name: 'Gate Entry Logs', path: '/faculty/campus-entry-logs', icon: Clock },
     { name: 'Alumni Directory', path: '/directory', icon: Users },
+    { name: 'Community Forum', path: '/faculty/community', icon: MessageSquare },
   ];
 
   const adminLinks = [
@@ -61,6 +73,13 @@ export const Sidebar = ({ isOpen, onClose }) => {
       icon: ShieldCheck,
       badge: pendingSummary?.pendingAlumniVerifications,
       badgeColor: 'bg-amber-500 text-slate-950'
+    },
+    {
+      name: 'Student Registrations',
+      path: '/admin/student-registrations',
+      icon: GraduationCap,
+      badge: pendingSummary?.pendingStudentRegistrations,
+      badgeColor: 'bg-rose-500 text-white'
     },
     {
       name: 'Campus Visits',
@@ -79,6 +98,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
       badgeColor: 'bg-purple-500 text-white'
     },
     { name: 'Alumni Directory', path: '/directory', icon: Users },
+    { name: 'Community Forum', path: '/admin/community', icon: MessageSquare },
   ];
 
   const watchmanLinks = [
@@ -97,6 +117,9 @@ export const Sidebar = ({ isOpen, onClose }) => {
   } else if (isStaff()) {
     links = staffLinks;
     panelTitle = 'Faculty Portal';
+  } else if (isStudent()) {
+    links = studentLinks;
+    panelTitle = 'Student Portal';
   }
 
   return (

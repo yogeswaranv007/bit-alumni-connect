@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { LoadingSpinner } from './LoadingSpinner';
 
 export const ProtectedRoute = ({ children, requiredRole }) => {
-  const { isAuthenticated, loading, user, hasRole, isWatchman, isAdmin, isStaff, isAlumni } = useAuth();
+  const { isAuthenticated, loading, user, hasRole, isWatchman, isAdmin, isStaff, isAlumni, isStudent } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -35,6 +35,9 @@ export const ProtectedRoute = ({ children, requiredRole }) => {
       }
       if (isAlumni()) {
         return <Navigate to="/alumni/dashboard" replace />;
+      }
+      if (isStudent()) {
+        return <Navigate to="/student/dashboard" replace />;
       }
       return <Navigate to="/" replace />;
     }
