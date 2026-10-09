@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record AdminPendingSummaryDto(
         long pendingAlumniVerifications,
+        long pendingStudentRegistrations,
         long pendingCampusVisits,
         long pendingChangeRequests,
         long totalPendingCount,

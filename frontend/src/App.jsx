@@ -18,6 +18,8 @@ import { NotificationsPage } from './pages/common/NotificationsPage';
 
 // Auth & Verification Pages
 import { LoginPage } from './pages/public/LoginPage';
+import { StudentLoginPage } from './pages/public/StudentLoginPage';
+import { AlumniLoginPage } from './pages/public/AlumniLoginPage';
 import { RegisterPage } from './pages/public/RegisterPage';
 import { PublicVerifyPage } from './pages/public/PublicVerifyPage';
 import { DirectoryPage } from './pages/alumni/DirectoryPage';
@@ -44,6 +46,17 @@ import { AdminChangeRequestReviewPage } from './pages/admin/AdminChangeRequestRe
 import { AdminCampusVisits } from './pages/admin/AdminCampusVisits';
 import { AdminCampusEntryLogs } from './pages/admin/AdminCampusEntryLogs';
 import { AdminRfidManagement } from './pages/admin/AdminRfidManagement';
+import { AdminStudentRegistrationsPage } from './pages/admin/AdminStudentRegistrationsPage';
+
+// Community Forum
+import { CommunityPage } from './pages/community/CommunityPage';
+
+// Student Portal Pages
+import { StudentRegisterPage } from './pages/student/StudentRegisterPage';
+import { StudentDashboard } from './pages/student/StudentDashboard';
+import { StudentProfilePage } from './pages/student/StudentProfilePage';
+import { StudentDigitalIdPage } from './pages/student/StudentDigitalIdPage';
+import { StudentVerifyPage } from './pages/student/StudentVerifyPage';
 
 export const App = () => {
   return (
@@ -71,7 +84,12 @@ export const App = () => {
 
       {/* Standalone Auth & Verification Routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/student/login" element={<StudentLoginPage />} />
+      <Route path="/alumni/login" element={<AlumniLoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/student/register" element={<StudentRegisterPage />} />
+      <Route path="/register/student" element={<StudentRegisterPage />} />
+      <Route path="/verify/student/:token" element={<StudentVerifyPage />} />
       <Route path="/verify/:token" element={<PublicVerifyPage />} />
       <Route path="/directory" element={<DirectoryPage />} />
 
@@ -106,6 +124,7 @@ export const App = () => {
       >
         <Route path="campus-visits" element={<FacultyCampusVisits />} />
         <Route path="campus-entry-logs" element={<AdminCampusEntryLogs />} />
+        <Route path="community" element={<CommunityPage />} />
         <Route index element={<Navigate to="/faculty/campus-visits" replace />} />
       </Route>
 
@@ -123,6 +142,7 @@ export const App = () => {
         <Route path="profile" element={<AlumniProfilePage />} />
         <Route path="change-request" element={<ProfileChangeRequestPage />} />
         <Route path="virtual-id" element={<DigitalIdPage />} />
+        <Route path="community" element={<CommunityPage />} />
         <Route index element={<Navigate to="/alumni/dashboard" replace />} />
       </Route>
 
@@ -137,12 +157,30 @@ export const App = () => {
       >
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="alumni" element={<AdminAlumniListPage />} />
+        <Route path="student-registrations" element={<AdminStudentRegistrationsPage />} />
         <Route path="campus-visits" element={<AdminCampusVisits />} />
         <Route path="campus-entry-logs" element={<AdminCampusEntryLogs />} />
         <Route path="rfid-management" element={<AdminRfidManagement />} />
         <Route path="change-requests" element={<AdminChangeRequestsPage />} />
         <Route path="change-requests/:id" element={<AdminChangeRequestReviewPage />} />
+        <Route path="community" element={<CommunityPage />} />
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
+      </Route>
+
+      {/* Student Portal Routes (Protected within DashboardLayout) */}
+      <Route
+        path="/student"
+        element={
+          <ProtectedRoute requiredRole="ROLE_STUDENT">
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<StudentDashboard />} />
+        <Route path="profile" element={<StudentProfilePage />} />
+        <Route path="digital-id" element={<StudentDigitalIdPage />} />
+        <Route path="community" element={<CommunityPage />} />
+        <Route index element={<Navigate to="/student/dashboard" replace />} />
       </Route>
 
       {/* Fallback */}

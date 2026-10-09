@@ -66,12 +66,22 @@ public class AlumniProfile extends BaseAuditableEntity {
     )
     private Department department;
 
+
     // Academic Information
+
+    /**
+     * Reference to the college's authoritative alumni master record (e.g. "ALU-000001").
+     * Populated at registration after institutional verification.
+     */
+    @Column(name = "institutional_record_id", length = 40)
+    private String institutionalRecordId;
+
     @Column(name = "roll_number", length = 30, nullable = false, unique = true)
     private String rollNumber;
 
     @Column(name = "register_number", length = 30, nullable = false, unique = true)
     private String registerNumber;
+
 
     @Column(name = "degree", length = 50, nullable = false)
     private String degree;

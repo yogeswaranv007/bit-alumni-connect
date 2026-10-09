@@ -58,6 +58,49 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /** Student portal login — backend enforces ROLE_STUDENT */
+  const loginStudent = async (email, password) => {
+    setLoading(true);
+    try {
+      const response = await authApi.loginStudent({ email, password });
+      if (response.success && response.data) {
+        const { accessToken, user: userData } = response.data;
+        localStorage.setItem('bit_auth_token', accessToken);
+        localStorage.setItem('bit_auth_user', JSON.stringify(userData));
+        setToken(accessToken);
+        setUser(userData);
+        return { success: true, user: userData };
+      }
+      return { success: false, message: response.message || 'Login failed' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Invalid credentials or insufficient access' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** Alumni portal login — backend enforces ROLE_ALUMNI */
+  const loginAlumni = async (email, password) => {
+    setLoading(true);
+    try {
+      const response = await authApi.loginAlumni({ email, password });
+      if (response.success && response.data) {
+        const { accessToken, user: userData } = response.data;
+        localStorage.setItem('bit_auth_token', accessToken);
+        localStorage.setItem('bit_auth_user', JSON.stringify(userData));
+        setToken(accessToken);
+        setUser(userData);
+        return { success: true, user: userData };
+      }
+      return { success: false, message: response.message || 'Login failed' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Invalid credentials or insufficient access' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const register = async (fullName, email, password) => {
     setLoading(true);
     try {
@@ -95,6 +138,7 @@ export const AuthProvider = ({ children }) => {
   const isStaff = () => hasRole('ROLE_STAFF');
   const isWatchman = () => hasRole('ROLE_WATCHMAN');
   const isAlumni = () => hasRole('ROLE_ALUMNI');
+  const isStudent = () => hasRole('ROLE_STUDENT');
 
   return (
     <AuthContext.Provider
@@ -104,6 +148,8 @@ export const AuthProvider = ({ children }) => {
         loading,
         isAuthenticated: !!token && !!user,
         login,
+        loginStudent,
+        loginAlumni,
         register,
         logout,
         refreshUser: fetchCurrentUser,
@@ -113,11 +159,13 @@ export const AuthProvider = ({ children }) => {
         isStaff,
         isWatchman,
         isAlumni,
+        isStudent,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
+
 };
 
 export const useAuth = () => {
