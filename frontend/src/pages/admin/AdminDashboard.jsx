@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../api/adminApi';
 import { adminStudentApi } from '../../api/studentApi';
@@ -71,63 +71,63 @@ export const AdminDashboard = () => {
       {/* ── STUDENT SECTION ────────────────────────────────────────────────── */}
       <section className="space-y-5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
             <GraduationCap className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-lg font-extrabold text-slate-900">Student Registrations</h2>
-            <p className="text-xs text-slate-500">Institutional student verification queue — separate from alumni</p>
+            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Student Registrations</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Institutional student verification queue — separate from alumni</p>
           </div>
           <Link to="/admin/student-registrations"
-            className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 hover:text-rose-900">
+            className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300">
             Manage All <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Pending Review',    value: studentStats.pending,  border: 'border-amber-200',   text: 'text-amber-700',   bg: 'bg-amber-50',   icon: Clock },
-            { label: 'Approved',          value: studentStats.approved, border: 'border-emerald-200', text: 'text-emerald-700', bg: 'bg-emerald-50', icon: CheckCircle2 },
-            { label: 'Requires Correction', value: studentStats.rejected, border: 'border-rose-200',  text: 'text-rose-700',   bg: 'bg-rose-50',   icon: XCircle },
-            { label: 'Total Students',    value: studentStats.total,    border: 'border-slate-200',   text: 'text-slate-600',   bg: 'bg-slate-100',  icon: Users },
+            { label: 'Pending Review',    value: studentStats.pending,  border: 'border-amber-200 dark:border-amber-800/60',   text: 'text-amber-700 dark:text-amber-400',   bg: 'bg-amber-50 dark:bg-amber-950/40',   icon: Clock },
+            { label: 'Approved',          value: studentStats.approved, border: 'border-emerald-200 dark:border-emerald-800/60', text: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40', icon: CheckCircle2 },
+            { label: 'Requires Correction', value: studentStats.rejected, border: 'border-rose-200 dark:border-rose-800/60',  text: 'text-rose-700 dark:text-rose-400',   bg: 'bg-rose-50 dark:bg-rose-950/40',   icon: XCircle },
+            { label: 'Total Students',    value: studentStats.total,    border: 'border-slate-200 dark:border-slate-800',   text: 'text-slate-600 dark:text-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800',  icon: Users },
           ].map(({ label, value, border, text, bg, icon: Icon }) => (
-            <div key={label} className={`bg-white rounded-2xl p-5 border ${border} shadow-sm space-y-2`}>
+            <div key={label} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 border ${border} shadow-sm space-y-2 transition-colors`}>
               <div className="flex justify-between items-center">
                 <span className={`text-[10px] font-bold uppercase tracking-wider ${text}`}>{label}</span>
                 <div className={`w-7 h-7 rounded-lg ${bg} ${text} flex items-center justify-center`}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <p className="text-2xl font-extrabold text-slate-900">{value}</p>
+              <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{value}</p>
             </div>
           ))}
         </div>
 
         {/* Recent pending students */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-900">Pending Student Registrations</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Pending Student Registrations</h3>
             <Link to="/admin/student-registrations?status=PENDING"
-              className="text-xs font-bold text-rose-700 hover:text-rose-900 inline-flex items-center gap-1">
+              className="text-xs font-bold text-rose-700 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 inline-flex items-center gap-1">
               View All <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
           {recentPendingStudents.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 space-y-1">
+            <div className="p-8 text-center text-slate-400 dark:text-slate-500 space-y-1">
               <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-400" />
-              <p className="text-xs font-bold text-slate-600">No pending student registrations</p>
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No pending student registrations</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {recentPendingStudents.map(p => (
-                <div key={p.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-slate-50 transition">
+                <div key={p.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
                   <div className={`w-8 h-8 rounded-full text-white font-black flex items-center justify-center text-xs flex-shrink-0
                     ${p.studentType === 'DAY_SCHOLAR' ? 'bg-rose-700' : p.studentType === 'HOSTELER' ? 'bg-blue-700' : 'bg-slate-500'}`}>
                     {p.studentType === 'DAY_SCHOLAR' ? 'D' : p.studentType === 'HOSTELER' ? 'H' : p.fullName?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">{p.fullName}</p>
-                    <p className="text-[10px] text-slate-500 truncate">{p.registerNumber} · {p.degree} · {p.departmentCode}</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{p.fullName}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{p.registerNumber} · {p.degree} · {p.departmentCode}</p>
                   </div>
                   <Link to={`/admin/student-registrations`}
                     className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold transition">
@@ -143,62 +143,62 @@ export const AdminDashboard = () => {
       {/* ── ALUMNI SECTION ─────────────────────────────────────────────────── */}
       <section className="space-y-5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-bit-100 text-bit-700 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-bit-100 dark:bg-bit-950/60 text-bit-700 dark:text-bit-300 flex items-center justify-center flex-shrink-0">
             <ShieldCheck className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-lg font-extrabold text-slate-900">Alumni Registrations</h2>
-            <p className="text-xs text-slate-500">Alumni identity verification queue — separate from student</p>
+            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Alumni Registrations</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Alumni identity verification queue — separate from student</p>
           </div>
           <Link to="/admin/alumni"
-            className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-bit-700 hover:text-bit-900">
+            className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-bit-700 dark:text-bit-400 hover:text-bit-900 dark:hover:text-bit-300">
             Manage All <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Pending Review',   value: alumniStats.pending,  border: 'border-amber-200',   text: 'text-amber-700',   bg: 'bg-amber-50',   icon: Clock },
-            { label: 'Verified',         value: alumniStats.verified, border: 'border-emerald-200', text: 'text-emerald-700', bg: 'bg-emerald-50', icon: CheckCircle2 },
-            { label: 'Action Required',  value: alumniStats.rejected, border: 'border-rose-200',   text: 'text-rose-700',   bg: 'bg-rose-50',   icon: XCircle },
-            { label: 'Total Alumni',     value: alumniStats.total,    border: 'border-slate-200',   text: 'text-slate-600',   bg: 'bg-slate-100',  icon: Users },
+            { label: 'Pending Review',   value: alumniStats.pending,  border: 'border-amber-200 dark:border-amber-800/60',   text: 'text-amber-700 dark:text-amber-400',   bg: 'bg-amber-50 dark:bg-amber-950/40',   icon: Clock },
+            { label: 'Verified',         value: alumniStats.verified, border: 'border-emerald-200 dark:border-emerald-800/60', text: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40', icon: CheckCircle2 },
+            { label: 'Action Required',  value: alumniStats.rejected, border: 'border-rose-200 dark:border-rose-800/60',   text: 'text-rose-700 dark:text-rose-400',   bg: 'bg-rose-50 dark:bg-rose-950/40',   icon: XCircle },
+            { label: 'Total Alumni',     value: alumniStats.total,    border: 'border-slate-200 dark:border-slate-800',   text: 'text-slate-600 dark:text-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800',  icon: Users },
           ].map(({ label, value, border, text, bg, icon: Icon }) => (
-            <div key={label} className={`bg-white rounded-2xl p-5 border ${border} shadow-sm space-y-2`}>
+            <div key={label} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 border ${border} shadow-sm space-y-2 transition-colors`}>
               <div className="flex justify-between items-center">
                 <span className={`text-[10px] font-bold uppercase tracking-wider ${text}`}>{label}</span>
                 <div className={`w-7 h-7 rounded-lg ${bg} ${text} flex items-center justify-center`}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
               </div>
-              <p className="text-2xl font-extrabold text-slate-900">{value}</p>
+              <p className="text-2xl font-extrabold text-slate-900 dark:text-white">{value}</p>
             </div>
           ))}
         </div>
 
         {/* Recent pending alumni */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-900">Pending Alumni Verifications</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Pending Alumni Verifications</h3>
             <Link to="/admin/alumni?status=PENDING"
-              className="text-xs font-bold text-bit-700 hover:text-bit-900 inline-flex items-center gap-1">
+              className="text-xs font-bold text-bit-700 dark:text-bit-400 hover:text-bit-900 dark:hover:text-bit-300 inline-flex items-center gap-1">
               View All ({alumniStats.pending}) <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
           {recentPendingAlumni.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 space-y-1">
+            <div className="p-8 text-center text-slate-400 dark:text-slate-500 space-y-1">
               <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-400" />
-              <p className="text-xs font-bold text-slate-600">No pending alumni verifications</p>
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No pending alumni verifications</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {recentPendingAlumni.map(p => (
-                <div key={p.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-slate-50 transition">
+                <div key={p.id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
                   <div className="w-8 h-8 rounded-full bg-bit-700 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
                     {p.fullName?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">{p.fullName}</p>
-                    <p className="text-[10px] text-slate-500 truncate">{p.rollNumber} / {p.registerNumber} · Class of {p.batchEndYear}</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{p.fullName}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{p.rollNumber} / {p.registerNumber} · Class of {p.batchEndYear}</p>
                   </div>
                   <Link to={`/admin/alumni?reviewId=${p.id}`}
                     className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-bit-700 hover:bg-bit-800 text-white text-xs font-bold transition">

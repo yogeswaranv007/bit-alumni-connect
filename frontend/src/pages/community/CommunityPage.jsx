@@ -34,7 +34,8 @@ import {
   FileText,
   Check,
   CornerDownRight,
-  AlertCircle
+  AlertCircle,
+  ShieldAlert
 } from 'lucide-react';
 
 // ─── Filter & Content Type Configurations ────────────────────────────────────
@@ -300,11 +301,20 @@ function PostCard({ post, onSelect, onToggleUpvote, onCopyLink, currentUserId, i
               </div>
             )}
 
-            <div className="flex items-center gap-1.5 truncate text-xs">
-              <span className="font-medium text-slate-800 truncate">
+            <div className="flex items-center gap-1.5 truncate text-xs flex-wrap">
+              <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
                 {post.isAnonymous ? 'Anonymous' : (post.authorName || 'BIT Member')}
               </span>
               {!post.isAnonymous && <AuthorBadge roles={post.authorRoles ? Object.values(post.authorRoles) : []} />}
+              {post.isAnonymous && post.realAuthorName && (
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                  title={`Admin Security Audit: Sent by ${post.realAuthorName} (${post.realAuthorEmail || 'no email'})`}
+                >
+                  <ShieldAlert className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                  <span>Admin: {post.realAuthorName}</span>
+                </span>
+              )}
               <span className="text-slate-400 text-[11px]">· {formatRelative(post.createdAt)}</span>
             </div>
           </div>
@@ -407,8 +417,9 @@ function PostDetailView({
       const res = await communityApi.acceptReply(post.id, replyId);
       const updatedPost = res.data.data || res.data;
       onPostUpdated(updatedPost);
+      await loadReplies();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to accept answer.');
+      alert(err.response?.data?.message || 'Failed to update accepted answer.');
     }
   };
 
@@ -448,9 +459,9 @@ function PostDetailView({
     }
   };
 
-  // Find accepted reply if any
-  const acceptedReply = post.acceptedReplyId ? replies.find(r => r.id === post.acceptedReplyId) : null;
-  const regularReplies = replies.filter(r => !parentReply && r.id !== post.acceptedReplyId);
+  // Multiple accepted answers support: collect all accepted replies
+  const acceptedReplies = replies.filter(r => r.isAccepted || r.id === post.acceptedReplyId);
+  const topLevelReplies = replies.filter(r => !r.parentReplyId);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
@@ -545,11 +556,21 @@ function PostDetailView({
               </div>
             )}
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-900 text-sm">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-slate-900 dark:text-white text-sm">
                   {post.isAnonymous ? 'Anonymous' : (post.authorName || 'BIT Member')}
                 </span>
                 {!post.isAnonymous && <AuthorBadge roles={post.authorRoles ? Object.values(post.authorRoles) : []} />}
+                {post.isAnonymous && post.realAuthorName && (
+                  <span
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                    title={`Admin Security Audit: Anonymous message sent by ${post.realAuthorName} (${post.realAuthorEmail || 'no email'})`}
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>Admin Audit: {post.realAuthorName}</span>
+                    {post.realAuthorEmail && <span className="opacity-75 font-normal text-[11px]">({post.realAuthorEmail})</span>}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-1.5 text-slate-400 text-xs mt-0.5">
                 {post.authorDesignation && !post.isAnonymous && (
@@ -685,57 +706,75 @@ function PostDetailView({
         </div>
       </div>
 
-      {/* ── Prominently Featured Accepted Answer (for Questions) ─────────── */}
-      {post.contentType === 'QUESTION' && acceptedReply && (
-        <div className="bg-emerald-50/70 border border-emerald-300 rounded-xl p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-emerald-200">
-            <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
-              <Award className="w-4 h-4 text-emerald-700" />
-              <span>Accepted Best Answer</span>
+      {/* ── Prominently Featured Accepted Answers (for Questions, supports multiple) ─── */}
+      {post.contentType === 'QUESTION' && acceptedReplies.length > 0 && (
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-xl p-5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between pb-3 border-b border-emerald-200 dark:border-emerald-800/60">
+            <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300 font-bold text-sm">
+              <Award className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+              <span>Accepted Solutions {acceptedReplies.length > 1 && `(${acceptedReplies.length})`}</span>
             </div>
-            {isOwnerOrAdmin && (
-              <button
-                type="button"
-                onClick={() => handleAcceptReply(acceptedReply.id)}
-                className="text-xs text-emerald-800 hover:text-emerald-950 font-medium underline"
-              >
-                Unaccept
-              </button>
-            )}
+            <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+              Verified Solutions
+            </span>
           </div>
 
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-              {(acceptedReply.authorName || 'U')[0].toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-slate-900 text-xs">
-                  {acceptedReply.isAnonymous ? 'Anonymous' : (acceptedReply.authorName || 'BIT Member')}
-                </span>
-                {!acceptedReply.isAnonymous && <AuthorBadge roles={acceptedReply.authorRoles ? Object.values(acceptedReply.authorRoles) : []} />}
-                <span className="text-slate-400 text-[11px]">· {formatRelative(acceptedReply.createdAt)}</span>
+          <div className="divide-y divide-emerald-200/50 dark:divide-emerald-800/40">
+            {acceptedReplies.map(accReply => (
+              <div key={accReply.id} className="pt-3 first:pt-0">
+                <div className="flex items-start justify-between gap-3 mb-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                      {(accReply.authorName || 'U')[0].toUpperCase()}
+                    </div>
+                    <span className="font-semibold text-slate-900 dark:text-white text-xs">
+                      {accReply.isAnonymous ? 'Anonymous' : (accReply.authorName || 'BIT Member')}
+                    </span>
+                    {!accReply.isAnonymous && <AuthorBadge roles={accReply.authorRoles ? Object.values(accReply.authorRoles) : []} />}
+                    {accReply.isAnonymous && accReply.realAuthorName && (
+                      <span
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                        title={`Admin Security Audit: Sent by ${accReply.realAuthorName} (${accReply.realAuthorEmail || 'no email'})`}
+                      >
+                        <ShieldAlert className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                        <span>Admin View: {accReply.realAuthorName}</span>
+                      </span>
+                    )}
+                    <span className="text-slate-400 text-[11px]">· {formatRelative(accReply.createdAt)}</span>
+                  </div>
+
+                  {isOwnerOrAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => handleAcceptReply(accReply.id)}
+                      className="text-xs text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 dark:hover:text-emerald-100 font-medium underline flex-shrink-0"
+                    >
+                      Unaccept
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed whitespace-pre-wrap pl-8">
+                  {accReply.body}
+                </p>
               </div>
-              <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">
-                {acceptedReply.body}
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       )}
 
       {/* ── Replies Section ─────────────────────────────────────────────── */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <h2 className="font-semibold text-slate-800 text-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <h2 className="font-semibold text-slate-800 dark:text-white text-sm">
             {post.contentType === 'QUESTION' ? 'Answers & Solutions' : 'Discussion Replies'}
-            <span className="ml-2 text-xs font-normal text-slate-500">({replies.length})</span>
+            <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">({replies.length})</span>
           </h2>
           <button
             type="button"
             title="Refresh replies"
             onClick={loadReplies}
-            className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
+            className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
@@ -746,16 +785,16 @@ function PostDetailView({
             <Loader2 className="w-5 h-5 animate-spin text-bit-600" />
           </div>
         ) : replies.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-sm">
-            <MessageCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="font-medium text-slate-600">No replies yet</p>
-            <p className="text-xs text-slate-400 mt-0.5">
+          <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
+            <MessageCircle className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            <p className="font-medium text-slate-600 dark:text-slate-300">No replies yet</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
               {post.contentType === 'QUESTION' ? 'Have an answer or advice? Share it below.' : 'Be the first to join the conversation.'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {regularReplies.map(reply => (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {topLevelReplies.map(reply => (
               <div key={reply.id} id={`reply-item-${reply.id}`} className="p-4 sm:p-5">
                 <div className="flex items-start gap-3">
                   <div className="w-7 h-7 rounded-full bg-slate-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
@@ -763,11 +802,21 @@ function PostDetailView({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-900 text-xs">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-slate-900 dark:text-white text-xs">
                           {reply.isAnonymous ? 'Anonymous' : (reply.authorName || 'BIT Member')}
                         </span>
                         {!reply.isAnonymous && <AuthorBadge roles={reply.authorRoles ? Object.values(reply.authorRoles) : []} />}
+                        {reply.isAnonymous && reply.realAuthorName && (
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                            title={`Admin Security Audit: Sent by ${reply.realAuthorName} (${reply.realAuthorEmail || 'no email'})`}
+                          >
+                            <ShieldAlert className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                            <span>Admin View: {reply.realAuthorName}</span>
+                            {reply.realAuthorEmail && <span className="opacity-75 font-normal text-[9px]">({reply.realAuthorEmail})</span>}
+                          </span>
+                        )}
                         <span className="text-slate-400 text-[11px]">· {formatRelative(reply.createdAt)}</span>
                       </div>
 
@@ -783,18 +832,18 @@ function PostDetailView({
                       )}
                     </div>
 
-                    <p className="text-slate-800 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap mb-2.5">
+                    <p className="text-slate-800 dark:text-slate-200 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap mb-2.5">
                       {reply.body}
                     </p>
 
                     {/* Actions row */}
-                    <div className="flex items-center gap-3 text-xs">
+                    <div className="flex items-center gap-3 text-xs flex-wrap">
                       <button
                         type="button"
                         id={`upvote-reply-${reply.id}`}
                         onClick={() => handleToggleReplyUpvote(reply.id)}
                         className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ${
-                          reply.hasUpvoted ? 'text-bit-700 font-semibold' : 'text-slate-500 hover:text-bit-700'
+                          reply.hasUpvoted ? 'text-bit-700 dark:text-bit-400 font-semibold' : 'text-slate-500 hover:text-bit-700'
                         }`}
                       >
                         <ThumbsUp className="w-3.5 h-3.5" />
@@ -807,39 +856,65 @@ function PostDetailView({
                           setParentReply({ id: reply.id, authorName: reply.authorName || 'this reply' });
                           replyInputRef.current?.focus();
                         }}
-                        className="text-slate-500 hover:text-bit-700 transition-colors inline-flex items-center gap-1"
+                        className="text-slate-500 hover:text-bit-700 dark:text-slate-400 dark:hover:text-bit-300 transition-colors inline-flex items-center gap-1"
                       >
                         <CornerDownRight className="w-3 h-3" />
                         <span>Reply</span>
                       </button>
 
-                      {/* Accept Answer button for question owner / admin */}
-                      {post.contentType === 'QUESTION' && isOwnerOrAdmin && !post.isSolved && (
-                        <button
-                          type="button"
-                          id={`accept-answer-btn-${reply.id}`}
-                          onClick={() => handleAcceptReply(reply.id)}
-                          className="text-emerald-700 hover:text-emerald-900 font-semibold inline-flex items-center gap-1 transition-colors"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Accept as Solution</span>
-                        </button>
+                      {/* Accept Answer controls (supports multiple accepted answers) */}
+                      {post.contentType === 'QUESTION' && (
+                        (reply.isAccepted || reply.id === post.acceptedReplyId) ? (
+                          <div className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800 font-bold text-xs">
+                            <Award className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>Accepted Solution</span>
+                            {isOwnerOrAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleAcceptReply(reply.id)}
+                                className="ml-1 text-[10px] text-emerald-800 dark:text-emerald-200 hover:underline font-normal"
+                              >
+                                (Unaccept)
+                              </button>
+                            )}
+                          </div>
+                        ) : isOwnerOrAdmin ? (
+                          <button
+                            type="button"
+                            id={`accept-answer-btn-${reply.id}`}
+                            onClick={() => handleAcceptReply(reply.id)}
+                            className="text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400 font-semibold inline-flex items-center gap-1 transition-colors"
+                            title="Mark this answer as accepted (multiple answers can be accepted)"
+                          >
+                            <Award className="w-3.5 h-3.5" />
+                            <span>Accept as Solution</span>
+                          </button>
+                        ) : null
                       )}
                     </div>
 
                     {/* Nested Replies (1-level deep) */}
                     {replies.filter(nr => nr.parentReplyId === reply.id).length > 0 && (
-                      <div className="mt-3 pl-3 border-l-2 border-slate-200 space-y-2.5">
+                      <div className="mt-3 pl-3 border-l-2 border-slate-200 dark:border-slate-700 space-y-2.5">
                         {replies.filter(nr => nr.parentReplyId === reply.id).map(nested => (
                           <div key={nested.id} className="text-xs">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="font-semibold text-slate-800 text-[11px]">
+                            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                              <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
                                 {nested.isAnonymous ? 'Anonymous' : (nested.authorName || 'BIT Member')}
                               </span>
                               {!nested.isAnonymous && <AuthorBadge roles={nested.authorRoles ? Object.values(nested.authorRoles) : []} />}
+                              {nested.isAnonymous && nested.realAuthorName && (
+                                <span
+                                  className="inline-flex items-center gap-1 text-[9px] font-semibold px-1 py-0.2 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                                  title={`Admin Security Audit: Sent by ${nested.realAuthorName} (${nested.realAuthorEmail || 'no email'})`}
+                                >
+                                  <ShieldAlert className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
+                                  <span>Admin: {nested.realAuthorName}</span>
+                                </span>
+                              )}
                               <span className="text-slate-400 text-[10px]">· {formatRelative(nested.createdAt)}</span>
                             </div>
-                            <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{nested.body}</p>
+                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{nested.body}</p>
                           </div>
                         ))}
                       </div>

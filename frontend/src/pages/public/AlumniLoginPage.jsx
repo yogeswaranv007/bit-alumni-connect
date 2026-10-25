@@ -43,7 +43,7 @@ export const AlumniLoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-950 via-slate-900 to-emerald-950 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-bit-950 via-slate-950 to-navy-950 flex flex-col">
       <Navbar />
 
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
@@ -51,11 +51,11 @@ export const AlumniLoginPage = () => {
 
           {/* Header */}
           <div className="text-center space-y-3">
-            <div className="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white items-center justify-center shadow-2xl shadow-teal-600/40">
+            <div className="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br from-bit-600 via-bit-700 to-navy-900 text-gold-400 items-center justify-center shadow-2xl shadow-bit-950/60 border border-gold-500/30">
               <GraduationCap className="w-9 h-9" />
             </div>
             <div>
-              <p className="text-xs font-bold tracking-[0.25em] text-teal-400 uppercase mb-1">
+              <p className="text-xs font-bold tracking-[0.25em] text-gold-400 uppercase mb-1">
                 BIT Connect
               </p>
               <h1 className="text-3xl font-extrabold text-white tracking-tight">
@@ -92,7 +92,7 @@ export const AlumniLoginPage = () => {
                     placeholder="name@bitsathy.ac.in"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/60 transition"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/40 focus:border-bit-500/60 transition"
                   />
                 </div>
               </div>
@@ -111,7 +111,7 @@ export const AlumniLoginPage = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/60 transition"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/40 focus:border-bit-500/60 transition"
                   />
                 </div>
               </div>
@@ -120,7 +120,7 @@ export const AlumniLoginPage = () => {
                 id="alumni-login-submit-btn"
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white text-sm font-bold shadow-lg shadow-teal-700/30 hover:shadow-xl hover:shadow-teal-600/40 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-bit-600 via-bit-700 to-navy-900 hover:from-bit-500 hover:to-navy-800 text-white text-sm font-bold shadow-lg shadow-bit-950/40 border border-bit-500/30 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{loading ? 'Signing in…' : 'Sign In'}</span>
                 {!loading && <ArrowRight className="w-4 h-4" />}
@@ -133,7 +133,7 @@ export const AlumniLoginPage = () => {
                 Don't have an alumni account yet?{' '}
                 <Link
                   to="/register"
-                  className="font-bold text-teal-400 hover:text-teal-300 transition hover:underline"
+                  className="font-bold text-gold-400 hover:text-gold-300 transition hover:underline"
                 >
                   Register here
                 </Link>
@@ -142,7 +142,7 @@ export const AlumniLoginPage = () => {
 
             {/* Demo one-click logins */}
             <div className="pt-2 border-t border-white/10 space-y-2">
-              <div className="flex items-center gap-1 text-[10px] font-bold text-amber-500/70 uppercase tracking-wider">
+              <div className="flex items-center gap-1 text-[10px] font-bold text-gold-500/70 uppercase tracking-wider">
                 <Sparkles className="w-3 h-3" />
                 <span>Demo One-Click Login</span>
               </div>
@@ -152,7 +152,7 @@ export const AlumniLoginPage = () => {
                   onClick={(e) => handleDemoFill(e, 'alumni@bitsathy.ac.in')}
                   className="p-2.5 rounded-lg border border-white/10 hover:bg-white/10 text-left transition"
                 >
-                  <p className="font-bold text-teal-400 text-xs">Alumni Account</p>
+                  <p className="font-bold text-gold-400 text-xs">Alumni Account</p>
                   <p className="text-[10px] text-slate-500 truncate">alumni@bitsathy.ac.in</p>
                 </button>
                 <button

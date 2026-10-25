@@ -216,7 +216,7 @@ export const NotificationBell = () => {
       {/* Universal Bell Button */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="relative p-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200"
+        className="relative p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70 focus:outline-none focus:ring-2 focus:ring-bit-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all duration-200"
         aria-label="Notifications"
         aria-expanded={isOpen}
       >
@@ -225,7 +225,7 @@ export const NotificationBell = () => {
         {/* Dynamic Unread Badge */}
         {unreadCount > 0 && (
           <span
-            className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold text-white bg-rose-500 border-2 border-white rounded-full shadow-sm animate-in fade-in zoom-in-75 duration-200"
+            className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold text-white bg-rose-500 border-2 border-white dark:border-slate-900 rounded-full shadow-sm animate-in fade-in zoom-in-75 duration-200"
             aria-live="polite"
           >
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -235,13 +235,13 @@ export const NotificationBell = () => {
 
       {/* Notification Center Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-24px)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Header */}
-          <div className="px-5 py-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between">
+          <div className="px-5 py-4 bg-gradient-to-r from-bit-950 via-navy-950 to-slate-900 text-white flex items-center justify-between border-b border-white/10">
             <div className="flex items-center space-x-2">
               <h3 className="font-bold text-sm tracking-tight">Notifications</h3>
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-500 text-white rounded-full">
+                <span className="px-2 py-0.5 text-xs font-semibold bg-gold-500/20 text-gold-300 border border-gold-500/30 rounded-full">
                   {unreadCount} new
                 </span>
               )}
@@ -250,7 +250,7 @@ export const NotificationBell = () => {
               <button
                 onClick={handleMarkAllAsRead}
                 disabled={markingAll}
-                className="text-xs font-medium text-slate-300 hover:text-emerald-400 flex items-center space-x-1 transition-colors duration-150 disabled:opacity-50"
+                className="text-xs font-medium text-slate-300 hover:text-gold-300 flex items-center space-x-1 transition-colors duration-150 disabled:opacity-50"
                 title="Mark all as read"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
@@ -260,15 +260,15 @@ export const NotificationBell = () => {
           </div>
 
           {/* List Content */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 scrollbar-thin">
+          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 scrollbar-thin">
             {loading && notifications.length === 0 ? (
               <div className="p-6 space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="animate-pulse flex space-x-3">
-                    <div className="w-9 h-9 bg-slate-200 rounded-xl flex-shrink-0" />
+                    <div className="w-9 h-9 bg-slate-200 dark:bg-slate-800 rounded-xl flex-shrink-0" />
                     <div className="flex-1 space-y-2 py-1">
-                      <div className="h-3.5 bg-slate-200 rounded w-3/4" />
-                      <div className="h-3 bg-slate-100 rounded w-5/6" />
+                      <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                      <div className="h-3 bg-slate-100 dark:bg-slate-800/60 rounded w-5/6" />
                     </div>
                   </div>
                 ))}
@@ -280,13 +280,13 @@ export const NotificationBell = () => {
                   <div
                     key={notif.id}
                     onClick={() => handleNotificationClick(notif)}
-                    className={`p-4 transition-all duration-150 cursor-pointer flex items-start space-x-3.5 hover:bg-slate-50 relative group ${
-                      !notif.isRead ? 'bg-emerald-50/30' : 'bg-white'
+                    className={`p-4 transition-all duration-150 cursor-pointer flex items-start space-x-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 relative group ${
+                      !notif.isRead ? 'bg-bit-50/40 dark:bg-bit-950/40' : 'bg-white dark:bg-slate-900'
                     }`}
                   >
                     {/* Unread Indicator Dot */}
                     {!notif.isRead && (
-                      <span className="absolute top-4 right-3.5 w-2 h-2 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
+                      <span className="absolute top-4 right-3.5 w-2 h-2 rounded-full bg-bit-600 dark:bg-gold-400 ring-4 ring-bit-100 dark:ring-bit-950" />
                     )}
 
                     {/* Icon Badge */}
@@ -301,22 +301,22 @@ export const NotificationBell = () => {
                       <div className="flex items-center justify-between">
                         <h4
                           className={`text-xs truncate ${
-                            !notif.isRead ? 'font-bold text-slate-900' : 'font-medium text-slate-800'
+                            !notif.isRead ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-800 dark:text-slate-200'
                           }`}
                         >
                           {notif.title}
                         </h4>
                       </div>
-                      <p className="text-xs text-slate-600 mt-0.5 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
                         {notif.message}
                       </p>
                       <div className="flex items-center space-x-2 mt-2">
-                        <span className="text-[10px] font-medium text-slate-400 flex items-center">
+                        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
                           {getRelativeTime(notif.createdAt)}
                         </span>
                         {notif.actorName && (
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
                             • by {notif.actorName}
                           </span>
                         )}
@@ -327,11 +327,11 @@ export const NotificationBell = () => {
               })
             ) : (
               <div className="py-12 px-6 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-bit-50 dark:bg-bit-950/60 text-bit-600 dark:text-gold-400 flex items-center justify-center mx-auto mb-3">
                   <Sparkles className="w-6 h-6" />
                 </div>
-                <h4 className="text-sm font-bold text-slate-800">You're all caught up!</h4>
-                <p className="text-xs text-slate-500 mt-1 max-w-[220px] mx-auto">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">You're all caught up!</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-[220px] mx-auto">
                   New campus alerts, approvals, and announcements will appear here.
                 </p>
               </div>
@@ -339,11 +339,11 @@ export const NotificationBell = () => {
           </div>
 
           {/* Footer */}
-          <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
+          <div className="p-3 bg-slate-50 dark:bg-slate-900/90 border-t border-slate-100 dark:border-slate-800 text-center">
             <Link
               to="/notifications"
               onClick={() => setIsOpen(false)}
-              className="inline-flex items-center justify-center text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline py-1 px-3 transition-colors"
+              className="inline-flex items-center justify-center text-xs font-bold text-bit-700 dark:text-bit-300 hover:text-bit-900 dark:hover:text-gold-300 hover:underline py-1 px-3 transition-colors"
             >
               <span>View all notifications</span>
               <ChevronRight className="w-3.5 h-3.5 ml-1" />

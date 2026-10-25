@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { studentApi } from '../../api/studentApi';
 import { useAuth } from '../../context/AuthContext';
@@ -113,13 +113,13 @@ export const StudentDashboard = () => {
       {/* Quick links grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Digital Student ID */}
-        <div className={`bg-white rounded-2xl border shadow-sm p-5 flex flex-col gap-4 ${isApproved ? 'border-emerald-200' : 'border-slate-200 opacity-60'}`}>
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isApproved ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+        <div className={`bg-white dark:bg-slate-900 rounded-2xl border shadow-sm p-5 flex flex-col gap-4 transition-colors ${isApproved ? 'border-emerald-200 dark:border-emerald-800/60' : 'border-slate-200 dark:border-slate-800 opacity-60'}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isApproved ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
             <CreditCard className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-sm text-slate-900">Digital Student ID</h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Digital Student ID</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {isApproved
                 ? `ID: ${profile.studentIdCardNumber || 'View card'}`
                 : 'Available after admin approval'}
@@ -127,7 +127,7 @@ export const StudentDashboard = () => {
           </div>
           {isApproved ? (
             <Link to="/student/digital-id"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-900">
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300">
               View ID Card <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           ) : (
@@ -138,63 +138,63 @@ export const StudentDashboard = () => {
         </div>
 
         {/* Community */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
-          <div className="w-10 h-10 rounded-xl bg-bit-50 text-bit-600 flex items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 flex flex-col gap-4 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-bit-50 dark:bg-bit-950/40 text-bit-600 dark:text-bit-400 flex items-center justify-center">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-sm text-slate-900">Community Forum</h3>
-            <p className="text-xs text-slate-500 mt-1">Ask questions, share insights</p>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Community Forum</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Ask questions, share insights</p>
           </div>
           <Link to="/student/community"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-bit-700 hover:text-bit-900">
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-bit-700 dark:text-bit-400 hover:text-bit-900 dark:hover:text-bit-300">
             Open Forum <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {/* Alumni Directory */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 flex flex-col gap-4 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center">
             <Users className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-sm text-slate-900">Alumni Directory</h3>
-            <p className="text-xs text-slate-500 mt-1">Connect with BIT graduates</p>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Alumni Directory</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Connect with BIT graduates</p>
           </div>
           <Link to="/directory"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700 hover:text-purple-900">
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300">
             Browse Directory <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {/* Notifications */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 flex flex-col gap-4 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <Bell className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-sm text-slate-900">Notifications</h3>
-            <p className="text-xs text-slate-500 mt-1">Registration updates &amp; announcements</p>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Notifications</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Registration updates &amp; announcements</p>
           </div>
           <Link to="/notifications"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-900">
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300">
             View All <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {/* Profile */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 flex flex-col gap-4 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
             <GraduationCap className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-sm text-slate-900">My Profile</h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">My Profile</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               {profile ? `${profile.degree} • ${profile.departmentCode}` : 'Complete your registration'}
             </p>
           </div>
           <Link to="/student/profile"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900">
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
             {profile ? 'View Profile' : 'Register'} <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -202,20 +202,20 @@ export const StudentDashboard = () => {
 
       {/* Approved: profile summary bar */}
       {isApproved && profile && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 transition-colors">
           <div className="flex items-center gap-4">
             {profile.profilePhotoUrl ? (
               <img src={profile.profilePhotoUrl} alt={profile.fullName}
-                className="w-14 h-14 rounded-xl object-cover border border-slate-200" />
+                className="w-14 h-14 rounded-xl object-cover border border-slate-200 dark:border-slate-700" />
             ) : (
-              <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center">
-                <GraduationCap className="w-7 h-7 text-slate-400" />
+              <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <GraduationCap className="w-7 h-7 text-slate-400 dark:text-slate-500" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="font-extrabold text-slate-900 truncate">{profile.fullName}</p>
-              <p className="text-xs text-slate-500 truncate">{profile.registerNumber} • {profile.departmentCode} • {profile.degree}</p>
-              <p className="text-xs text-slate-500">Batch {profile.batchStartYear}–{profile.batchEndYear} •&nbsp;
+              <p className="font-extrabold text-slate-900 dark:text-white truncate">{profile.fullName}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{profile.registerNumber} • {profile.departmentCode} • {profile.degree}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Batch {profile.batchStartYear}–{profile.batchEndYear} •&nbsp;
                 {profile.studentType === 'DAY_SCHOLAR' ? '🔴 Day Scholar' : profile.studentType === 'HOSTELER' ? '🔵 Hosteler' : '—'}
               </p>
             </div>

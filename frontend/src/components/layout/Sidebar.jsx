@@ -17,6 +17,7 @@ import {
   MessageSquare,
   GraduationCap
 } from 'lucide-react';
+import { ThemeToggle } from '../common/ThemeToggle';
 
 export const Sidebar = ({ isOpen, onClose }) => {
   const { isAlumni, isAdmin, isStaff, isAdminOnly, isWatchman, isStudent } = useAuth();
@@ -134,13 +135,13 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
       {/* Sidebar Panel */}
       <aside
-        className={`fixed top-16 bottom-0 left-0 z-30 w-64 bg-white border-r border-slate-200 flex flex-col justify-between transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-16 bottom-0 left-0 z-30 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between transition-all duration-200 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="py-6 px-4 space-y-6 overflow-y-auto">
           <div className="px-3 flex items-center justify-between">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {panelTitle}
             </span>
             {isAdminOnly() && pendingSummary && pendingSummary.totalPendingCount > 0 && (
@@ -163,7 +164,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                     `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                       isActive
                         ? 'bg-bit-700 text-white shadow-sm shadow-bit-700/20'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                     }`
                   }
                 >
@@ -186,11 +187,18 @@ export const Sidebar = ({ isOpen, onClose }) => {
           </nav>
         </div>
 
-        {/* Footer info box */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-          <div className="p-3 bg-white rounded-xl border border-slate-200 text-center shadow-2xs">
-            <p className="text-xs font-bold text-slate-800">Need Help?</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">alumni@bitsathy.ac.in</p>
+        {/* Footer info box & Global Theme Switcher */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Theme
+            </span>
+            <ThemeToggle showLabel={true} className="w-full justify-between" />
+          </div>
+
+          <div className="p-3 bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow-2xs">
+            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Need Help?</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">alumni@bitsathy.ac.in</p>
           </div>
         </div>
       </aside>

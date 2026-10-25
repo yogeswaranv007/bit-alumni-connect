@@ -20,12 +20,18 @@ public record CommunityReplyResponse(
         CommunityContentStatus status,
         String body,
         boolean isAnonymous,
+        boolean isAccepted,
 
-        // Author projection (masked for anonymous)
+        // Author projection (masked for anonymous unless author)
         UUID authorId,
         String authorName,
         String authorPhotoUrl,
         Set<RoleName> authorRoles,
+
+        // Admin Security Audit projection (only visible to users with ROLE_ADMIN)
+        String realAuthorName,
+        String realAuthorEmail,
+        UUID realAuthorId,
 
         // Threading
         UUID parentReplyId,
@@ -43,7 +49,8 @@ public record CommunityReplyResponse(
             CommunityReply reply,
             boolean hasUpvoted,
             UUID currentUserId,
-            String authorPhotoUrl) {
+            String authorPhotoUrl,
+            boolean isCallerAdmin) {
         boolean anon = reply.isAnonymous();
         boolean isAuthor = currentUserId != null && reply.getAuthor() != null
                 && currentUserId.equals(reply.getAuthor().getId());
@@ -54,11 +61,18 @@ public record CommunityReplyResponse(
                 : (reply.getAuthor() != null ? reply.getAuthor().getFullName() : null);
         String photoUrl   = (anon && !isAuthor) ? null : authorPhotoUrl;
 
+        // Admin security audit: Admins can see the real sender for anonymous messages
+        String realAuthorName  = (anon && isCallerAdmin && reply.getAuthor() != null) ? reply.getAuthor().getFullName() : null;
+        String realAuthorEmail = (anon && isCallerAdmin && reply.getAuthor() != null) ? reply.getAuthor().getEmail() : null;
+        UUID realAuthorId      = (anon && isCallerAdmin && reply.getAuthor() != null) ? reply.getAuthor().getId() : null;
+
         Set<RoleName> roles = null;
         if (reply.getAuthor() != null && reply.getAuthor().getRoles() != null) {
-            roles = new java.util.HashSet<>();
-            for (var role : reply.getAuthor().getRoles()) {
-                roles.add(role.getName());
+            if (!anon || isAuthor || isCallerAdmin) {
+                roles = new java.util.HashSet<>();
+                for (var role : reply.getAuthor().getRoles()) {
+                    roles.add(role.getName());
+                }
             }
         }
 
@@ -68,10 +82,14 @@ public record CommunityReplyResponse(
                 reply.getStatus(),
                 reply.getBody(),
                 reply.isAnonymous(),
+                reply.isAccepted(),
                 authorId,
                 authorName,
                 photoUrl,
                 roles,
+                realAuthorName,
+                realAuthorEmail,
+                realAuthorId,
                 reply.getParentReply() != null ? reply.getParentReply().getId() : null,
                 reply.getUpvoteCount(),
                 hasUpvoted,
@@ -80,7 +98,15 @@ public record CommunityReplyResponse(
         );
     }
 
+    public static CommunityReplyResponse from(
+            CommunityReply reply,
+            boolean hasUpvoted,
+            UUID currentUserId,
+            String authorPhotoUrl) {
+        return from(reply, hasUpvoted, currentUserId, authorPhotoUrl, false);
+    }
+
     public static CommunityReplyResponse from(CommunityReply reply, boolean hasUpvoted, UUID currentUserId) {
-        return from(reply, hasUpvoted, currentUserId, null);
+        return from(reply, hasUpvoted, currentUserId, null, false);
     }
 }
