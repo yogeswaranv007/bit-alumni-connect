@@ -51,4 +51,8 @@ public interface CommunityReplyRepository extends JpaRepository<CommunityReply, 
     boolean existsByIdAndPostId(UUID replyId, UUID postId);
 
     long countByPostIdAndStatusNot(UUID postId, CommunityContentStatus excludedStatus);
+
+    long countByPostIdAndIsAcceptedTrue(UUID postId);
+
+    List<CommunityReply> findByPostIdAndIsAcceptedTrue(UUID postId);
 }

@@ -405,12 +405,24 @@ public class CommunityServiceImpl implements CommunityService {
             throw new BadRequestException("The specified reply does not belong to this post.");
         }
 
-        // Toggle: if already accepted, unaccept it
-        if (post.isSolved() && acceptedReplyId.equals(post.getAcceptedReplyId())) {
-            post.setSolved(false);
-            post.setAcceptedReplyId(null);
+        // Toggle: if already accepted, unaccept it; otherwise mark as accepted (supports multiple accepted answers)
+        if (reply.isAccepted()) {
+            reply.setAccepted(false);
+            replyRepository.save(reply);
+
+            long remainingAccepted = replyRepository.countByPostIdAndIsAcceptedTrue(postId);
+            if (remainingAccepted == 0) {
+                post.setSolved(false);
+                post.setAcceptedReplyId(null);
+            } else if (acceptedReplyId.equals(post.getAcceptedReplyId())) {
+                List<CommunityReply> otherAccepted = replyRepository.findByPostIdAndIsAcceptedTrue(postId);
+                post.setAcceptedReplyId(!otherAccepted.isEmpty() ? otherAccepted.get(0).getId() : null);
+            }
             log.info("Reply unaccepted: postId={}, replyId={}, actor={}", postId, acceptedReplyId, actorUserId);
         } else {
+            reply.setAccepted(true);
+            replyRepository.save(reply);
+
             post.setSolved(true);
             post.setAcceptedReplyId(acceptedReplyId);
 
@@ -421,7 +433,7 @@ public class CommunityServiceImpl implements CommunityService {
                         reply.getAuthor(),
                         NotificationType.COMMUNITY_REPLY_ACCEPTED,
                         "Your answer was accepted!",
-                        "Your reply on \"" + truncate(post.getTitle(), 60) + "\" was accepted as the best answer.",
+                        "Your reply on \"" + truncate(post.getTitle(), 60) + "\" was accepted as a helpful solution.",
                         postId,
                         "COMMUNITY_POST",
                         actor.getFullName()
@@ -623,14 +635,16 @@ public class CommunityServiceImpl implements CommunityService {
         boolean hasUpvoted = currentUserId != null
                 && voteRepository.existsByUserIdAndPostId(currentUserId, post.getId());
         AuthorProfileMeta meta = resolveAuthorMeta(post.getAuthor());
-        return CommunityPostResponse.from(post, hasUpvoted, currentUserId, meta.photoUrl(), meta.designation());
+        boolean isCallerAdmin = isUserAdmin(currentUserId);
+        return CommunityPostResponse.from(post, hasUpvoted, currentUserId, meta.photoUrl(), meta.designation(), isCallerAdmin);
     }
 
     private CommunityReplyResponse toReplyResponse(CommunityReply reply, UUID currentUserId) {
         boolean hasUpvoted = currentUserId != null
                 && voteRepository.existsByUserIdAndReplyId(currentUserId, reply.getId());
         AuthorProfileMeta meta = resolveAuthorMeta(reply.getAuthor());
-        return CommunityReplyResponse.from(reply, hasUpvoted, currentUserId, meta.photoUrl());
+        boolean isCallerAdmin = isUserAdmin(currentUserId);
+        return CommunityReplyResponse.from(reply, hasUpvoted, currentUserId, meta.photoUrl(), isCallerAdmin);
     }
 
     private void sendCommunityNotification(
