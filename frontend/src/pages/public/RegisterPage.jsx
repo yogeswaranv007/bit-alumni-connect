@@ -70,7 +70,7 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-950 via-slate-900 to-emerald-950 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-bit-950 via-slate-950 to-navy-950 flex flex-col">
       <Navbar />
 
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
@@ -78,11 +78,11 @@ export const RegisterPage = () => {
 
           {/* Header */}
           <div className="text-center space-y-3">
-            <div className="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white items-center justify-center shadow-2xl shadow-teal-600/40">
-              <ShieldCheck className="w-9 h-9" />
+            <div className="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br from-bit-600 to-bit-800 text-white items-center justify-center shadow-2xl shadow-bit-700/40 border border-bit-500/30">
+              <ShieldCheck className="w-9 h-9 text-gold-300" />
             </div>
             <div>
-              <p className="text-xs font-bold tracking-[0.25em] text-teal-400 uppercase mb-1">
+              <p className="text-xs font-bold tracking-[0.25em] text-gold-400 uppercase mb-1">
                 BIT Connect — Alumni Portal
               </p>
               <h1 className="text-2xl font-extrabold text-white tracking-tight">
@@ -95,10 +95,10 @@ export const RegisterPage = () => {
           </div>
 
           {/* Info banner */}
-          <div className="flex items-start gap-3 bg-teal-500/10 border border-teal-500/20 rounded-2xl p-4">
-            <CheckCircle2 className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 bg-bit-500/10 border border-bit-500/20 rounded-2xl p-4">
+            <CheckCircle2 className="w-5 h-5 text-bit-400 flex-shrink-0 mt-0.5" />
             <div className="text-xs text-slate-300 space-y-1">
-              <p className="font-bold text-teal-300">Institutional Verification Required</p>
+              <p className="font-bold text-bit-300">Institutional Verification Required</p>
               <p>Your register number, full name, and date of birth must match the college alumni records. Unverified registrations are not accepted.</p>
             </div>
           </div>
@@ -117,7 +117,7 @@ export const RegisterPage = () => {
 
               {/* Institutional verification */}
               <div className="space-y-3 border-b border-white/10 pb-4">
-                <p className="text-[10px] font-bold text-teal-400 uppercase tracking-wider">
+                <p className="text-[10px] font-bold text-gold-400 uppercase tracking-wider">
                   Institutional Verification
                 </p>
 
@@ -134,7 +134,7 @@ export const RegisterPage = () => {
                       placeholder="e.g. 7376219IT210"
                       value={registerNumber}
                       onChange={(e) => setRegNum(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/60 transition font-mono"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/40 focus:border-bit-500/60 transition font-mono"
                     />
                   </div>
                 </div>
@@ -152,7 +152,7 @@ export const RegisterPage = () => {
                       placeholder="e.g. Praveen Kumar S"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/60 transition"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/40 focus:border-bit-500/60 transition"
                     />
                   </div>
                 </div>
@@ -169,7 +169,7 @@ export const RegisterPage = () => {
                       required
                       value={dateOfBirth}
                       onChange={(e) => setDob(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/60 transition"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/40 focus:border-bit-500/60 transition"
                     />
                   </div>
                 </div>
@@ -177,7 +177,7 @@ export const RegisterPage = () => {
 
               {/* Account credentials */}
               <div className="space-y-3">
-                <p className="text-[10px] font-bold text-teal-400 uppercase tracking-wider">
+                <p className="text-[10px] font-bold text-gold-400 uppercase tracking-wider">
                   BIT Connect Account Credentials
                 </p>
 
@@ -194,7 +194,7 @@ export const RegisterPage = () => {
                       placeholder="your.email@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/60 transition"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/40 focus:border-bit-500/60 transition"
                     />
                   </div>
                 </div>
@@ -213,7 +213,7 @@ export const RegisterPage = () => {
                       placeholder="Min 8 characters"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/60 transition"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/40 focus:border-bit-500/60 transition"
                     />
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export const RegisterPage = () => {
                       placeholder="Confirm your password"
                       value={confirmPassword}
                       onChange={(e) => setConfirm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500/60 transition"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/40 focus:border-bit-500/60 transition"
                     />
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export const RegisterPage = () => {
                 id="alumni-reg-submit-btn"
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white text-sm font-bold shadow-lg shadow-teal-700/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-bit-600 via-bit-700 to-navy-900 hover:from-bit-500 hover:to-navy-800 text-white text-sm font-bold shadow-lg shadow-bit-950/40 border border-bit-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <span>{loading ? 'Verifying & Registering…' : 'Verify & Create Account'}</span>
                 {!loading && <ArrowRight className="w-4 h-4" />}
@@ -251,7 +251,7 @@ export const RegisterPage = () => {
             <div className="text-center space-y-1.5 pt-2 border-t border-white/10">
               <p className="text-xs text-slate-400">
                 Already have an account?{' '}
-                <Link to="/alumni/login" className="font-bold text-teal-400 hover:underline">
+                <Link to="/alumni/login" className="font-bold text-gold-400 hover:text-gold-300 hover:underline">
                   Alumni Login
                 </Link>
               </p>

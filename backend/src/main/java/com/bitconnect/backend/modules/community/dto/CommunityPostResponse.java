@@ -37,6 +37,11 @@ public record CommunityPostResponse(
         Set<RoleName> authorRoles,
         String authorDesignation,  // for alumni/staff badge
 
+        // Admin Security Audit projection (only visible to users with ROLE_ADMIN)
+        String realAuthorName,
+        String realAuthorEmail,
+        UUID realAuthorId,
+
         // Department scope
         Integer departmentId,
         String departmentName,
@@ -65,13 +70,14 @@ public record CommunityPostResponse(
         OpportunityModerationStatus opportunityModerationStatus
 ) {
 
-    /** Construct from entity, resolving author profile photo and designation. */
+    /** Construct from entity, resolving author profile photo, designation, and admin audit fields. */
     public static CommunityPostResponse from(
             CommunityPost post,
             boolean hasUpvoted,
             UUID currentUserId,
             String authorPhotoUrl,
-            String authorDesignation) {
+            String authorDesignation,
+            boolean isCallerAdmin) {
         boolean anon = post.isAnonymous();
 
         // Authors can always see their own identity
@@ -83,13 +89,20 @@ public record CommunityPostResponse(
         String authorName   = (anon && !isAuthor) ? "Anonymous"
                 : (post.getAuthor() != null ? post.getAuthor().getFullName() : null);
         String photoUrl     = (anon && !isAuthor) ? null : authorPhotoUrl;
-        String designation  = (anon && !isAuthor) ? null : authorDesignation;
+        String designation  = (anon && !isAuthor && !isCallerAdmin) ? null : authorDesignation;
+
+        // Admin security audit: Admins can see the real sender for anonymous messages
+        String realAuthorName  = (anon && isCallerAdmin && post.getAuthor() != null) ? post.getAuthor().getFullName() : null;
+        String realAuthorEmail = (anon && isCallerAdmin && post.getAuthor() != null) ? post.getAuthor().getEmail() : null;
+        UUID realAuthorId      = (anon && isCallerAdmin && post.getAuthor() != null) ? post.getAuthor().getId() : null;
 
         Set<RoleName> roles = null;
         if (post.getAuthor() != null && post.getAuthor().getRoles() != null) {
-            roles = new java.util.HashSet<>();
-            for (var role : post.getAuthor().getRoles()) {
-                roles.add(role.getName());
+            if (!anon || isAuthor || isCallerAdmin) {
+                roles = new java.util.HashSet<>();
+                for (var role : post.getAuthor().getRoles()) {
+                    roles.add(role.getName());
+                }
             }
         }
 
@@ -109,6 +122,9 @@ public record CommunityPostResponse(
                 photoUrl,
                 roles,
                 designation,
+                realAuthorName,
+                realAuthorEmail,
+                realAuthorId,
                 post.getDepartment() != null ? post.getDepartment().getId() : null,
                 post.getDepartment() != null ? post.getDepartment().getName() : null,
                 post.getUpvoteCount(),
@@ -129,8 +145,17 @@ public record CommunityPostResponse(
         );
     }
 
+    public static CommunityPostResponse from(
+            CommunityPost post,
+            boolean hasUpvoted,
+            UUID currentUserId,
+            String authorPhotoUrl,
+            String authorDesignation) {
+        return from(post, hasUpvoted, currentUserId, authorPhotoUrl, authorDesignation, false);
+    }
+
     /** Construct from entity with default null photo/designation (backwards compatibility). */
     public static CommunityPostResponse from(CommunityPost post, boolean hasUpvoted, UUID currentUserId) {
-        return from(post, hasUpvoted, currentUserId, null, null);
+        return from(post, hasUpvoted, currentUserId, null, null, false);
     }
 }

@@ -32,7 +32,9 @@ import com.bitconnect.backend.modules.user.repository.UserRepository;
 import com.bitconnect.backend.modules.virtualid.service.VirtualIdService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -68,6 +70,33 @@ public class DataInitializer implements CommandLineRunner {
     private final VirtualIdService virtualIdService;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
+    private final Environment environment;
+
+    @Value("${app.seed.admin-password:}")
+    private String seedAdminPassword;
+
+    @Value("${app.seed.watchman-password:}")
+    private String seedWatchmanPassword;
+
+    @Value("${app.seed.faculty-password:}")
+    private String seedFacultyPassword;
+
+    @Value("${app.seed.alumni-password:}")
+    private String seedAlumniPassword;
+
+    @Value("${app.seed.student-password:}")
+    private String seedStudentPassword;
+
+    private boolean isProdProfile() {
+        return Arrays.asList(environment.getActiveProfiles()).contains("prod");
+    }
+
+    private String resolveSeedPassword(String configuredPassword) {
+        if (configuredPassword != null && !configuredPassword.isBlank()) {
+            return configuredPassword;
+        }
+        return null;
+    }
 
     @Override
     @Transactional
@@ -200,159 +229,180 @@ public class DataInitializer implements CommandLineRunner {
         Role staffRole = roleRepository.findByName(RoleName.ROLE_STAFF).orElseThrow();
         Role watchmanRole = roleRepository.findByName(RoleName.ROLE_WATCHMAN).orElseThrow();
 
-        // 1. Seed Development Administrator (admin@bitsathy.ac.in / Password@123)
+        // 1. Seed Administrator (admin@bitsathy.ac.in)
+        String adminPassword = resolveSeedPassword(seedAdminPassword);
         if (!userRepository.existsByEmail("admin@bitsathy.ac.in")) {
-            User adminUser = User.builder()
-                    .email("admin@bitsathy.ac.in")
-                    .fullName("System Administrator")
-                    .password(passwordEncoder.encode("Password@123"))
-                    .isActive(true)
-                    .roles(new HashSet<>(Set.of(adminRole)))
-                    .build();
-            userRepository.save(adminUser);
-            log.info("Initialized dev admin user: admin@bitsathy.ac.in");
+            if (adminPassword != null) {
+                User adminUser = User.builder()
+                        .email("admin@bitsathy.ac.in")
+                        .fullName("System Administrator")
+                        .password(passwordEncoder.encode(adminPassword))
+                        .isActive(true)
+                        .roles(new HashSet<>(Set.of(adminRole)))
+                        .build();
+                userRepository.save(adminUser);
+                log.info("Initialized admin user: admin@bitsathy.ac.in");
+            } else {
+                log.info("Skipped admin user seeding: password variable not set in active profile");
+            }
         }
 
-        // 2. Seed Development Gate Watchman (watchman@bitsathy.ac.in / Password@123)
+        // 2. Seed Gate Watchman (watchman@bitsathy.ac.in)
+        String watchmanPassword = resolveSeedPassword(seedWatchmanPassword);
         if (!userRepository.existsByEmail("watchman@bitsathy.ac.in")) {
-            User watchmanUser = User.builder()
-                    .email("watchman@bitsathy.ac.in")
-                    .fullName("Main Gate Security Watchman")
-                    .password(passwordEncoder.encode("Password@123"))
-                    .isActive(true)
-                    .roles(new HashSet<>(Set.of(watchmanRole)))
-                    .build();
-            userRepository.save(watchmanUser);
-            log.info("Initialized dev watchman user: watchman@bitsathy.ac.in");
+            if (watchmanPassword != null) {
+                User watchmanUser = User.builder()
+                        .email("watchman@bitsathy.ac.in")
+                        .fullName("Main Gate Security Watchman")
+                        .password(passwordEncoder.encode(watchmanPassword))
+                        .isActive(true)
+                        .roles(new HashSet<>(Set.of(watchmanRole)))
+                        .build();
+                userRepository.save(watchmanUser);
+                log.info("Initialized watchman user: watchman@bitsathy.ac.in");
+            } else {
+                log.info("Skipped watchman user seeding: password variable not set in active profile");
+            }
         }
 
-        // 3. Seed Development IT Faculty Member (faculty.it@bitsathy.ac.in / Password@123)
+        // 3. Seed IT Faculty Member (faculty.it@bitsathy.ac.in)
+        String facultyPassword = resolveSeedPassword(seedFacultyPassword);
         if (!userRepository.existsByEmail("faculty.it@bitsathy.ac.in")) {
-            Department itDept = departmentRepository.findByCode("IT").orElseThrow();
-            User facultyUser = User.builder()
-                    .email("faculty.it@bitsathy.ac.in")
-                    .fullName("Dr. Suresh Kumar")
-                    .password(passwordEncoder.encode("Password@123"))
-                    .isActive(true)
-                    .roles(new HashSet<>(Set.of(staffRole)))
-                    .build();
-            User savedFaculty = userRepository.save(facultyUser);
+            if (facultyPassword != null) {
+                Department itDept = departmentRepository.findByCode("IT").orElseThrow();
+                User facultyUser = User.builder()
+                        .email("faculty.it@bitsathy.ac.in")
+                        .fullName("Dr. Suresh Kumar")
+                        .password(passwordEncoder.encode(facultyPassword))
+                        .isActive(true)
+                        .roles(new HashSet<>(Set.of(staffRole)))
+                        .build();
+                User savedFaculty = userRepository.save(facultyUser);
 
-            StaffProfile staffProfile = StaffProfile.builder()
-                    .user(savedFaculty)
-                    .department(itDept)
-                    .staffCode("BIT-STF-IT-001")
-                    .designation("Professor & Head, Department of IT")
-                    .phoneNumber("+91 94433 12345")
-                    .build();
-            staffProfileRepository.save(staffProfile);
-            log.info("Initialized dev faculty user: faculty.it@bitsathy.ac.in");
+                StaffProfile staffProfile = StaffProfile.builder()
+                        .user(savedFaculty)
+                        .department(itDept)
+                        .staffCode("BIT-STF-IT-001")
+                        .designation("Professor & Head, Department of IT")
+                        .phoneNumber("+91 94433 12345")
+                        .build();
+                staffProfileRepository.save(staffProfile);
+                log.info("Initialized faculty user: faculty.it@bitsathy.ac.in");
+            } else {
+                log.info("Skipped faculty user seeding: password variable not set in active profile");
+            }
         }
 
-        // 4. Seed Development Verified Alumnus (alumni@bitsathy.ac.in / Password@123)
+        // 4. Seed Verified Alumnus (alumni@bitsathy.ac.in)
+        String alumniPassword = resolveSeedPassword(seedAlumniPassword);
         if (!userRepository.existsByEmail("alumni@bitsathy.ac.in")) {
-            User alumniUser = User.builder()
-                    .email("alumni@bitsathy.ac.in")
-                    .fullName("Demo Alumnus")
-                    .password(passwordEncoder.encode("Password@123"))
-                    .isActive(true)
-                    .roles(new HashSet<>(Set.of(alumniRole)))
-                    .build();
-            User savedAlumni = userRepository.save(alumniUser);
+            if (alumniPassword != null) {
+                User alumniUser = User.builder()
+                        .email("alumni@bitsathy.ac.in")
+                        .fullName("Demo Alumnus")
+                        .password(passwordEncoder.encode(alumniPassword))
+                        .isActive(true)
+                        .roles(new HashSet<>(Set.of(alumniRole)))
+                        .build();
+                User savedAlumni = userRepository.save(alumniUser);
 
-            Department itDept = departmentRepository.findByCode("IT").orElseThrow();
-            AlumniProfile profile = AlumniProfile.builder()
-                    .user(savedAlumni)
-                    .department(itDept)
-                    .rollNumber("DEMO2024")
-                    .registerNumber("7376DEMO2024")
-                    .degree("B.Tech")
-                    .batchStartYear(2020)
-                    .batchEndYear(2024)
-                    .profilePhotoUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400")
-                    .dateOfBirth(LocalDate.of(2002, 5, 15))
-                    .bloodGroup("O+")
-                    .personalEmail("demo.alumni@gmail.com")
-                    .phoneNumber("+91 98765 43210")
-                    .permanentAddress("123 College Road, Sathyamangalam, Erode, Tamil Nadu")
-                    .city("Erode")
-                    .state("Tamil Nadu")
-                    .country("India")
-                    .postalCode("638401")
-                    .currentCompany("Amazon Web Services")
-                    .currentDesignation("Software Development Engineer II")
-                    .industry("Cloud Computing & AI")
-                    .linkedinUrl("https://linkedin.com/in/demoalumnus")
-                    .verificationStatus(VerificationStatus.VERIFIED)
-                    .verifiedAt(Instant.now())
-                    .isDirectoryVisible(true)
-                    .build();
+                Department itDept = departmentRepository.findByCode("IT").orElseThrow();
+                AlumniProfile profile = AlumniProfile.builder()
+                        .user(savedAlumni)
+                        .department(itDept)
+                        .rollNumber("DEMO2024")
+                        .registerNumber("7376DEMO2024")
+                        .degree("B.Tech")
+                        .batchStartYear(2020)
+                        .batchEndYear(2024)
+                        .profilePhotoUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400")
+                        .dateOfBirth(LocalDate.of(2002, 5, 15))
+                        .bloodGroup("O+")
+                        .personalEmail("demo.alumni@gmail.com")
+                        .phoneNumber("+91 98765 43210")
+                        .permanentAddress("123 College Road, Sathyamangalam, Erode, Tamil Nadu")
+                        .city("Erode")
+                        .state("Tamil Nadu")
+                        .country("India")
+                        .postalCode("638401")
+                        .currentCompany("Amazon Web Services")
+                        .currentDesignation("Software Development Engineer II")
+                        .industry("Cloud Computing & AI")
+                        .linkedinUrl("https://linkedin.com/in/demoalumnus")
+                        .verificationStatus(VerificationStatus.VERIFIED)
+                        .verifiedAt(Instant.now())
+                        .isDirectoryVisible(true)
+                        .build();
 
-            AlumniProfile savedProfile = alumniProfileRepository.save(profile);
-            virtualIdService.issueVirtualId(savedProfile);
+                AlumniProfile savedProfile = alumniProfileRepository.save(profile);
+                virtualIdService.issueVirtualId(savedProfile);
 
-            // Seed sample RFID mapping for demo alumnus
-            RfidIdentityMapping rfidMapping = RfidIdentityMapping.builder()
-                    .alumniProfile(savedProfile)
-                    .rfidUid("RFID-BIT-DEMO-001")
-                    .cardNumber("NFC-2024-001")
-                    .status(RfidStatus.ACTIVE)
-                    .issuedDate(LocalDate.now())
-                    .notes("Primary RFID physical card")
-                    .build();
-            rfidRepository.save(rfidMapping);
+                // Seed sample RFID mapping for demo alumnus
+                RfidIdentityMapping rfidMapping = RfidIdentityMapping.builder()
+                        .alumniProfile(savedProfile)
+                        .rfidUid("RFID-BIT-DEMO-001")
+                        .cardNumber("NFC-2024-001")
+                        .status(RfidStatus.ACTIVE)
+                        .issuedDate(LocalDate.now())
+                        .notes("Primary RFID physical card")
+                        .build();
+                rfidRepository.save(rfidMapping);
 
-            log.info("Initialized dev verified Alumni Profile, Virtual ID & RFID for: alumni@bitsathy.ac.in");
+                log.info("Initialized verified Alumni Profile, Virtual ID & RFID for: alumni@bitsathy.ac.in");
+            } else {
+                log.info("Skipped alumni user seeding: password variable not set in active profile");
+            }
         }
 
-        // 5. Seed Development Student (student@bitsathy.ac.in / Password@123)
-        // [DEV ONLY] Clearly synthetic test account — not a real BIT student
+        // 5. Seed Student (student@bitsathy.ac.in)
+        String studentPassword = resolveSeedPassword(seedStudentPassword);
         Role studentRole = roleRepository.findByName(RoleName.ROLE_STUDENT).orElseThrow();
         Department itDeptForStudent = departmentRepository.findByCode("IT").orElseThrow();
 
         User studentUser;
         if (!userRepository.existsByEmail("student@bitsathy.ac.in")) {
-            studentUser = User.builder()
-                    .email("student@bitsathy.ac.in")
-                    .fullName("Test Student [DEV]")          // clearly synthetic
-                    .password(passwordEncoder.encode("Password@123"))
-                    .isActive(true)
-                    .roles(new HashSet<>(Set.of(studentRole)))
-                    .build();
-            studentUser = userRepository.save(studentUser);
-            log.info("[DEV] Initialized student user: student@bitsathy.ac.in / Password@123");
-        } else {
-            studentUser = userRepository.findByEmail("student@bitsathy.ac.in").orElseThrow();
-        }
+            if (studentPassword != null) {
+                studentUser = User.builder()
+                        .email("student@bitsathy.ac.in")
+                        .fullName("Test Student [DEV]")          // clearly synthetic
+                        .password(passwordEncoder.encode(studentPassword))
+                        .isActive(true)
+                        .roles(new HashSet<>(Set.of(studentRole)))
+                        .build();
+                studentUser = userRepository.save(studentUser);
+                log.info("[DEV] Initialized student user: student@bitsathy.ac.in");
 
-        // Seed PENDING StudentProfile for dev student if not already created
-        if (!studentProfileRepository.existsByUserId(studentUser.getId())) {
-            // Link the institutional record to this dev account
-            final User finalStudentUser = studentUser; // effectively final alias for lambda
-            collegeStudentRecordRepository.findByRegisterNumber("TEST-STU-001").ifPresent(rec -> {
-                rec.setLinkedBitConnectUserId(finalStudentUser.getId());
-                collegeStudentRecordRepository.save(rec);
-            });
+                // Seed PENDING StudentProfile for dev student if not already created
+                if (!studentProfileRepository.existsByUserId(studentUser.getId())) {
+                    final User finalStudentUser = studentUser;
+                    collegeStudentRecordRepository.findByRegisterNumber("TEST-STU-001").ifPresent(rec -> {
+                        rec.setLinkedBitConnectUserId(finalStudentUser.getId());
+                        collegeStudentRecordRepository.save(rec);
+                    });
 
-            StudentProfile studentProfile = StudentProfile.builder()
-                    .user(studentUser)
-                    .department(itDeptForStudent)
-                    .institutionalRecordId("STU-000001")      // matches CollegeStudentRecord
-                    .registerNumber("TEST-STU-001")           // clearly synthetic
-                    .degree("B.Tech")
-                    .batchStartYear(2023)
-                    .batchEndYear(2027)                       // 2023 + 4
-                    .studentType(StudentType.DAY_SCHOLAR)
-                    .bloodGroup("O+")
-                    .dateOfBirth(LocalDate.of(2005, 6, 15))  // valid: age ~21, clearly > 14
-                    .address("[DEV] 42 Test Colony, Sathyamangalam, Erode, Tamil Nadu 638401")
-                    .studentPhone("+91 99000 00001")          // synthetic test number
-                    .parentPhone("+91 99000 00002")           // synthetic test number
-                    .officialEmail("test.student@bitsathy.example") // .example = non-deliverable
-                    .registrationStatus(RegistrationStatus.PENDING)
-                    .build();
-            studentProfileRepository.save(studentProfile);
-            log.info("[DEV] Seeded PENDING StudentProfile for test student: TEST-STU-001 | student@bitsathy.ac.in");
+                    StudentProfile studentProfile = StudentProfile.builder()
+                            .user(studentUser)
+                            .department(itDeptForStudent)
+                            .institutionalRecordId("STU-000001")
+                            .registerNumber("TEST-STU-001")
+                            .degree("B.Tech")
+                            .batchStartYear(2023)
+                            .batchEndYear(2027)
+                            .studentType(StudentType.DAY_SCHOLAR)
+                            .bloodGroup("O+")
+                            .dateOfBirth(LocalDate.of(2005, 6, 15))
+                            .address("[DEV] 42 Test Colony, Sathyamangalam, Erode, Tamil Nadu 638401")
+                            .studentPhone("+91 99000 00001")
+                            .parentPhone("+91 99000 00002")
+                            .officialEmail("test.student@bitsathy.example")
+                            .registrationStatus(RegistrationStatus.PENDING)
+                            .build();
+                    studentProfileRepository.save(studentProfile);
+                    log.info("[DEV] Seeded PENDING StudentProfile for test student: TEST-STU-001 | student@bitsathy.ac.in");
+                }
+            } else {
+                log.info("Skipped student user seeding: password variable not set in active profile");
+            }
         }
     }
 

@@ -57,20 +57,20 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between transition-colors">
       <Navbar />
 
       <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 gap-8">
 
         {/* Portal Chooser — prominent cards at the top */}
         <div className="w-full max-w-2xl">
-          <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+          <p className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
             Select Your Portal
           </p>
           <div className="grid grid-cols-2 gap-4">
             <Link
               to="/student/login"
-              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-700 to-indigo-800 p-5 text-white shadow-xl shadow-blue-900/30 hover:shadow-2xl hover:shadow-blue-800/40 hover:-translate-y-0.5 transition-all duration-200"
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-bit-700 via-blue-700 to-indigo-800 p-5 text-white shadow-xl shadow-bit-900/30 hover:shadow-2xl hover:shadow-blue-800/40 hover:-translate-y-0.5 transition-all duration-200 border border-white/10"
             >
               <BookOpen className="w-7 h-7 mb-3 opacity-90" />
               <p className="font-extrabold text-lg leading-tight">Student</p>
@@ -80,37 +80,40 @@ export const LoginPage = () => {
 
             <Link
               to="/alumni/login"
-              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-700 to-emerald-800 p-5 text-white shadow-xl shadow-teal-900/30 hover:shadow-2xl hover:shadow-teal-800/40 hover:-translate-y-0.5 transition-all duration-200"
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-950 via-bit-900 to-slate-900 p-5 text-white shadow-xl shadow-navy-950/40 hover:shadow-2xl hover:shadow-bit-900/40 hover:-translate-y-0.5 transition-all duration-200 border border-gold-500/30"
             >
-              <GraduationCap className="w-7 h-7 mb-3 opacity-90" />
-              <p className="font-extrabold text-lg leading-tight">Alumni</p>
-              <p className="text-xs text-teal-200 mt-0.5">Graduated alumni</p>
-              <ArrowUpRight className="absolute top-4 right-4 w-4 h-4 opacity-60 group-hover:opacity-100 transition" />
+              <GraduationCap className="w-7 h-7 mb-3 text-gold-400" />
+              <div className="flex items-center gap-2">
+                <p className="font-extrabold text-lg leading-tight text-white">Alumni</p>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gold-500/20 text-gold-300 border border-gold-500/30">BIT</span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">Graduated alumni</p>
+              <ArrowUpRight className="absolute top-4 right-4 w-4 h-4 text-gold-400 opacity-60 group-hover:opacity-100 transition" />
             </Link>
           </div>
         </div>
 
         {/* Divider */}
         <div className="w-full max-w-md flex items-center gap-4">
-          <div className="flex-1 border-t border-slate-200" />
-          <span className="text-xs text-slate-400 font-semibold">Staff / Admin Login</span>
-          <div className="flex-1 border-t border-slate-200" />
+          <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
+          <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">Staff / Admin Login</span>
+          <div className="flex-1 border-t border-slate-200 dark:border-slate-800" />
         </div>
 
         {/* Staff / Admin general login form */}
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-1">
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Sign In to BIT Connect
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Admin, Faculty and Watchman accounts
             </p>
           </div>
 
-          <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl shadow-slate-200/50 space-y-6">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200/80 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-6 transition-colors">
             {error && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -118,37 +121,39 @@ export const LoginPage = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                   <input
                     id="general-login-email"
                     type="email"
+                    autoComplete="username"
                     required
                     placeholder="name@bitsathy.ac.in"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/20 focus:border-bit-600 transition"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/20 focus:border-bit-600 transition"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                   <input
                     id="general-login-password"
                     type="password"
+                    autoComplete="current-password"
                     required
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/20 focus:border-bit-600 transition"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-bit-500/20 focus:border-bit-600 transition"
                   />
                 </div>
               </div>
@@ -165,25 +170,25 @@ export const LoginPage = () => {
             </form>
 
             {/* Demo credentials */}
-            <div className="pt-4 border-t border-slate-100 space-y-2">
-              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                <Sparkles className="w-3 h-3 text-amber-500" />
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                <Sparkles className="w-3 h-3 text-gold-500" />
                 <span>Demo One-Click Login</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { label: 'Admin Account',  email: 'admin@bitsathy.ac.in',      color: 'text-bit-700' },
-                  { label: 'Watchman Gate',  email: 'watchman@bitsathy.ac.in',   color: 'text-amber-700' },
-                  { label: 'IT Faculty',     email: 'faculty.it@bitsathy.ac.in', color: 'text-indigo-700' },
+                  { label: 'Admin Account',  email: 'admin@bitsathy.ac.in',      color: 'text-bit-700 dark:text-bit-300' },
+                  { label: 'Watchman Gate',  email: 'watchman@bitsathy.ac.in',   color: 'text-amber-700 dark:text-amber-300' },
+                  { label: 'IT Faculty',     email: 'faculty.it@bitsathy.ac.in', color: 'text-indigo-700 dark:text-indigo-300' },
                 ].map(({ label, email: demoEmail, color }) => (
                   <button
                     key={demoEmail}
                     type="button"
                     onClick={() => handleDemoFill(demoEmail)}
-                    className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-left transition"
+                    className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-left transition"
                   >
                     <p className={`font-bold text-[11px] ${color}`}>{label}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{demoEmail}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{demoEmail}</p>
                   </button>
                 ))}
               </div>

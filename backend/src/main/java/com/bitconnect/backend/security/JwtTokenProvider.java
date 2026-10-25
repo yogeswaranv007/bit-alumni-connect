@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -28,11 +29,38 @@ import java.util.UUID;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${app.jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
+    @Value("${app.jwt.secret}")
     private String jwtSecret;
 
     @Value("${app.jwt.expiration-ms:86400000}")
     private long jwtExpirationInMs;
+
+    @PostConstruct
+    public void validateSecret() {
+        if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
+            throw new IllegalStateException(
+                "JWT secret configuration 'app.jwt.secret' (JWT_SECRET) must not be empty. " +
+                "Please configure a valid JWT_SECRET environment variable."
+            );
+        }
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            boolean validHex = false;
+            try {
+                byte[] hexBytes = HexFormat.of().parseHex(jwtSecret);
+                if (hexBytes.length >= 32) {
+                    validHex = true;
+                }
+            } catch (Exception ignored) {
+            }
+            if (!validHex) {
+                throw new IllegalStateException(
+                    "JWT secret key is too short. It must be at least 32 bytes (256 bits) for HMAC-SHA256, " +
+                    "but received " + keyBytes.length + " bytes. Configure a strong JWT_SECRET (e.g. openssl rand -base64 48)."
+                );
+            }
+        }
+    }
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);

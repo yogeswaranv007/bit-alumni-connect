@@ -87,6 +87,11 @@ public class CommunityReply extends BaseAuditableEntity {
     @Builder.Default
     private boolean isAnonymous = false;
 
+    /** Whether this reply has been marked as an accepted answer for the question. */
+    @Column(name = "is_accepted", nullable = false, columnDefinition = "boolean not null default false")
+    @Builder.Default
+    private boolean isAccepted = false;
+
     /** Populated by the moderator who hid/deleted this reply. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
