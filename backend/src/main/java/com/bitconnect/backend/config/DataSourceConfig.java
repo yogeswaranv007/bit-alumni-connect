@@ -23,6 +23,9 @@ public class DataSourceConfig {
     @Value("${DATABASE_URL:}")
     private String databaseUrl;
 
+    @Value("${DB_URL:}")
+    private String dbUrl;
+
     @Value("${spring.datasource.url:}")
     private String defaultUrl;
 
@@ -35,20 +38,28 @@ public class DataSourceConfig {
     @Bean
     @Primary
     public DataSource dataSource() {
-        String rawUrl = StringUtils.hasText(databaseUrl) ? databaseUrl.trim() : null;
+        // Resolve raw database URL candidate across DATABASE_URL, DB_URL, or spring.datasource.url
+        String candidateUrl = null;
+        if (StringUtils.hasText(databaseUrl)) {
+            candidateUrl = databaseUrl.trim();
+        } else if (StringUtils.hasText(dbUrl)) {
+            candidateUrl = dbUrl.trim();
+        } else if (StringUtils.hasText(defaultUrl)) {
+            candidateUrl = defaultUrl.trim();
+        }
 
-        // Strip surrounding quotes if loaded from .env / .env.local
-        if (rawUrl != null && rawUrl.startsWith("\"") && rawUrl.endsWith("\"") && rawUrl.length() > 1) {
-            rawUrl = rawUrl.substring(1, rawUrl.length() - 1);
+        // Strip surrounding quotes if loaded from .env or container environment
+        if (candidateUrl != null && candidateUrl.startsWith("\"") && candidateUrl.endsWith("\"") && candidateUrl.length() > 1) {
+            candidateUrl = candidateUrl.substring(1, candidateUrl.length() - 1);
         }
 
         HikariConfig config = new HikariConfig();
         config.setDriverClassName("org.postgresql.Driver");
 
-        if (StringUtils.hasText(rawUrl) && (rawUrl.startsWith("postgres://") || rawUrl.startsWith("postgresql://"))) {
-            log.info("Configuring DataSource from DATABASE_URL (Neon Serverless Postgres)");
+        if (StringUtils.hasText(candidateUrl) && (candidateUrl.startsWith("postgres://") || candidateUrl.startsWith("postgresql://"))) {
+            log.info("Configuring DataSource from PostgreSQL URI (Neon / Cloud Postgres)");
             try {
-                URI uri = new URI(rawUrl);
+                URI uri = new URI(candidateUrl);
                 String userInfo = uri.getUserInfo();
                 String username = null;
                 String password = null;
@@ -83,15 +94,19 @@ public class DataSourceConfig {
                     config.setPassword(password);
                 }
             } catch (Exception ex) {
-                log.error("Failed to parse DATABASE_URL, falling back to standard datasource properties: {}", ex.getMessage());
-                config.setJdbcUrl(defaultUrl);
+                log.error("Failed to parse PostgreSQL URI: {}", ex.getMessage());
+                throw new IllegalStateException("Failed to parse database connection URI", ex);
+            }
+        } else if (StringUtils.hasText(candidateUrl)) {
+            config.setJdbcUrl(candidateUrl);
+            if (StringUtils.hasText(defaultUsername)) {
                 config.setUsername(defaultUsername);
+            }
+            if (StringUtils.hasText(defaultPassword)) {
                 config.setPassword(defaultPassword);
             }
         } else {
-            config.setJdbcUrl(defaultUrl);
-            config.setUsername(defaultUsername);
-            config.setPassword(defaultPassword);
+            throw new IllegalStateException("No database URL configured! Please set DATABASE_URL or DB_URL.");
         }
 
         // HikariCP connection pool settings tuned for Neon Serverless Postgres
