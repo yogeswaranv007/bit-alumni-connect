@@ -186,6 +186,13 @@ public class DataInitializer implements CommandLineRunner {
         } catch (Exception ex) {
             log.debug("alumni_profiles institutional_record_id migration note: {}", ex.getMessage());
         }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check");
+            log.info("Ensured notifications_type_check constraint is dropped for messaging notifications");
+        } catch (Exception ex) {
+            log.debug("Notification constraint check note: {}", ex.getMessage());
+        }
     }
 
     private void seedRoles() {
@@ -417,6 +424,10 @@ public class DataInitializer implements CommandLineRunner {
     //         that call the real BIT college API/DB. No other code needs changing.
     // ─────────────────────────────────────────────────────────────────────────
     private void seedInstitutionalMasterData() {
+        if (isProdProfile()) {
+            log.info("Skipping synthetic institutional master data seeding in production profile");
+            return;
+        }
         seedMockStudentRecords();
         seedMockAlumniRecords();
     }

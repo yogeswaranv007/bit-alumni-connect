@@ -8,6 +8,7 @@ import java.util.UUID;
  */
 public record AlumniDirectoryResponse(
         UUID id,
+        UUID userId,
         String fullName,
         String profilePhotoUrl,
         String departmentName,
@@ -24,6 +25,7 @@ public record AlumniDirectoryResponse(
     public static AlumniDirectoryResponse fromEntity(com.bitconnect.backend.modules.alumni.entity.AlumniProfile profile) {
         return new AlumniDirectoryResponse(
                 profile.getId(),
+                profile.getUser().getId(),
                 profile.getUser().getFullName(),
                 profile.getProfilePhotoUrl(),
                 profile.getDepartment() != null ? profile.getDepartment().getName() : null,

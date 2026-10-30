@@ -44,6 +44,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
   const studentLinks = [
     { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
+    { name: 'Messages', path: '/messages', icon: MessageSquare },
     { name: 'Community Forum', path: '/student/community', icon: MessageSquare },
     { name: 'Alumni Directory', path: '/directory', icon: Users },
     { name: 'Digital Student ID', path: '/student/digital-id', icon: CreditCard },
@@ -52,6 +53,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
   const alumniLinks = [
     { name: 'Dashboard', path: '/alumni/dashboard', icon: LayoutDashboard },
+    { name: 'Messages', path: '/messages', icon: MessageSquare },
     { name: 'Campus Visit Pass', path: '/alumni/campus-visits', icon: CalendarCheck },
     { name: 'Digital Alumni ID', path: '/alumni/virtual-id', icon: CreditCard },
     { name: 'My Profile', path: '/alumni/profile', icon: User },
@@ -61,6 +63,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
   const staffLinks = [
     { name: 'Faculty Approvals', path: '/faculty/campus-visits', icon: CalendarCheck, badge: pendingSummary?.pendingCampusVisits },
+    { name: 'Messages', path: '/messages', icon: MessageSquare },
     { name: 'Gate Entry Logs', path: '/faculty/campus-entry-logs', icon: Clock },
     { name: 'Alumni Directory', path: '/directory', icon: Users },
     { name: 'Community Forum', path: '/faculty/community', icon: MessageSquare },
@@ -68,6 +71,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
   const adminLinks = [
     { name: 'Overview', path: '/admin/dashboard', icon: LayoutDashboard },
+    { name: 'Messages', path: '/messages', icon: MessageSquare },
     {
       name: 'Alumni Verification',
       path: '/admin/alumni',

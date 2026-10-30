@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
-  ArrowLeft
+  ArrowLeft,
+  MessageSquare
 } from 'lucide-react';
 import { LinkedInIcon } from '../../components/common/Icons';
 import { Navbar } from '../../components/layout/Navbar';
@@ -22,7 +23,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export const DirectoryPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [alumniList, setAlumniList] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,6 +92,17 @@ export const DirectoryPage = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     fetchDirectory(0);
+  };
+
+  const handleStartMessage = (alumnus) => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/directory');
+      return;
+    }
+    if (!alumnus.userId) {
+      return;
+    }
+    navigate(`/messages?recipientId=${alumnus.userId}&name=${encodeURIComponent(alumnus.fullName || 'Alumnus')}`);
   };
 
   // Generate batch years range
@@ -276,22 +288,43 @@ export const DirectoryPage = () => {
                 </div>
 
                 {/* Footer Action */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                   <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                     Verified Alumnus
                   </span>
 
-                  {alumnus.linkedinUrl && (
-                    <a
-                      href={alumnus.linkedinUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-bold text-bit-700 hover:text-bit-800 flex items-center space-x-1"
-                    >
-                      <LinkedInIcon className="w-3.5 h-3.5" />
-                      <span>Connect</span>
-                    </a>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {alumnus.userId && user?.id === alumnus.userId ? (
+                      <span className="text-xs font-semibold text-slate-400 italic px-2 py-1">
+                        You
+                      </span>
+                    ) : (
+                      alumnus.userId && (
+                        <button
+                          type="button"
+                          onClick={() => handleStartMessage(alumnus)}
+                          className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-bit-50 text-bit-700 hover:bg-bit-100 hover:text-bit-800 border border-bit-200 text-xs font-bold transition shadow-xs"
+                          title={`Message ${alumnus.fullName}`}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Message</span>
+                        </button>
+                      )
+                    )}
+
+                    {alumnus.linkedinUrl && (
+                      <a
+                        href={alumnus.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-bold text-bit-700 hover:text-bit-800 flex items-center space-x-1 p-1"
+                        title="LinkedIn Profile"
+                      >
+                        <LinkedInIcon className="w-3.5 h-3.5" />
+                        <span className="sr-only sm:not-sr-only">Connect</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
