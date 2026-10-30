@@ -49,6 +49,9 @@ public enum NotificationType {
     COMMUNITY_REPLY_ACCEPTED,    // reply was accepted as best answer
     COMMUNITY_POST_HIDDEN,       // admin hid a user's post (inform author)
 
+    // Messaging
+    NEW_ENCRYPTED_MESSAGE,       // user received a new private message (metadata only, zero plaintext)
+
     // Legacy compatibility constants for existing database rows
     ENTRY_VERIFIED,
     VISIT_APPROVED,
