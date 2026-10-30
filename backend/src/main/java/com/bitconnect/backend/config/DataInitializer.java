@@ -23,12 +23,17 @@ import com.bitconnect.backend.modules.staff.repository.StaffProfileRepository;
 import com.bitconnect.backend.modules.student.entity.RegistrationStatus;
 import com.bitconnect.backend.modules.student.entity.StudentProfile;
 import com.bitconnect.backend.modules.student.entity.StudentType;
+import com.bitconnect.backend.modules.student.entity.VirtualStudentId;
+import com.bitconnect.backend.modules.student.entity.StudentQrVerificationToken;
 import com.bitconnect.backend.modules.student.repository.StudentProfileRepository;
+import com.bitconnect.backend.modules.student.repository.VirtualStudentIdRepository;
+import com.bitconnect.backend.modules.student.repository.StudentQrVerificationTokenRepository;
 import com.bitconnect.backend.modules.user.entity.Role;
 import com.bitconnect.backend.modules.user.entity.RoleName;
 import com.bitconnect.backend.modules.user.entity.User;
 import com.bitconnect.backend.modules.user.repository.RoleRepository;
 import com.bitconnect.backend.modules.user.repository.UserRepository;
+import com.bitconnect.backend.modules.virtualid.entity.TokenStatus;
 import com.bitconnect.backend.modules.virtualid.service.VirtualIdService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +68,8 @@ public class DataInitializer implements CommandLineRunner {
     private final AlumniProfileRepository alumniProfileRepository;
     private final StaffProfileRepository staffProfileRepository;
     private final StudentProfileRepository studentProfileRepository;
+    private final VirtualStudentIdRepository virtualStudentIdRepository;
+    private final StudentQrVerificationTokenRepository studentQrTokenRepository;
     private final CollegeStudentRecordRepository collegeStudentRecordRepository;
     private final CollegeAlumniRecordRepository collegeAlumniRecordRepository;
     private final EventRepository eventRepository;
@@ -300,6 +307,30 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
+        if (!userRepository.existsByEmail("faculty@bitsathy.ac.in")) {
+            if (facultyPassword != null) {
+                Department itDept = departmentRepository.findByCode("IT").orElseThrow();
+                User facultyUser = User.builder()
+                        .email("faculty@bitsathy.ac.in")
+                        .fullName("Dr. Suresh Kumar")
+                        .password(passwordEncoder.encode(facultyPassword))
+                        .isActive(true)
+                        .roles(new HashSet<>(Set.of(staffRole)))
+                        .build();
+                User savedFaculty = userRepository.save(facultyUser);
+
+                StaffProfile staffProfile = StaffProfile.builder()
+                        .user(savedFaculty)
+                        .department(itDept)
+                        .staffCode("BIT-STF-IT-002")
+                        .designation("Professor & Head, Department of IT")
+                        .phoneNumber("+91 94433 12345")
+                        .build();
+                staffProfileRepository.save(staffProfile);
+                log.info("Initialized faculty user: faculty@bitsathy.ac.in");
+            }
+        }
+
         // 4. Seed Verified Alumnus (alumni@bitsathy.ac.in)
         String alumniPassword = resolveSeedPassword(seedAlumniPassword);
         if (!userRepository.existsByEmail("alumni@bitsathy.ac.in")) {
@@ -411,6 +442,65 @@ public class DataInitializer implements CommandLineRunner {
                 log.info("Skipped student user seeding: password variable not set in active profile");
             }
         }
+
+        // 6. Seed Student Sabesh Pranith (sabeshpranith.it23@bitsathy.ac.in)
+        if (!userRepository.existsByEmail("sabeshpranith.it23@bitsathy.ac.in")) {
+            if (studentPassword != null) {
+                User sabeshUser = User.builder()
+                        .email("sabeshpranith.it23@bitsathy.ac.in")
+                        .fullName("Sabesh Pranith M")
+                        .password(passwordEncoder.encode(studentPassword))
+                        .isActive(true)
+                        .roles(new HashSet<>(Set.of(studentRole)))
+                        .build();
+                sabeshUser = userRepository.save(sabeshUser);
+
+                final User finalSabeshUser = sabeshUser;
+                collegeStudentRecordRepository.findByRegisterNumber("7376232IT101").ifPresent(rec -> {
+                    rec.setLinkedBitConnectUserId(finalSabeshUser.getId());
+                    collegeStudentRecordRepository.save(rec);
+                });
+
+                if (!studentProfileRepository.existsByUserId(sabeshUser.getId())) {
+                    StudentProfile sabeshProfile = StudentProfile.builder()
+                            .user(sabeshUser)
+                            .department(itDeptForStudent)
+                            .institutionalRecordId("STU-2023-IT101")
+                            .registerNumber("7376232IT101")
+                            .degree("B.Tech")
+                            .batchStartYear(2023)
+                            .batchEndYear(2027)
+                            .studentType(StudentType.DAY_SCHOLAR)
+                            .bloodGroup("O+")
+                            .dateOfBirth(LocalDate.of(2005, 4, 18))
+                            .address("Bannari Amman Institute of Technology, Sathyamangalam, Erode, Tamil Nadu 638401")
+                            .studentPhone("+91 98421 78901")
+                            .parentPhone("+91 94432 10987")
+                            .officialEmail("sabeshpranith.it23@bitsathy.ac.in")
+                            .profilePhotoUrl("https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400")
+                            .registrationStatus(RegistrationStatus.APPROVED)
+                            .build();
+                    StudentProfile savedProf = studentProfileRepository.save(sabeshProfile);
+
+                    VirtualStudentId v = VirtualStudentId.builder()
+                            .studentProfile(savedProf)
+                            .studentIdCardNumber("BIT-STU-2027-0101")
+                            .issuedDate(LocalDate.now())
+                            .expiryDate(LocalDate.of(2027, 7, 31))
+                            .build();
+                    VirtualStudentId savedV = virtualStudentIdRepository.save(v);
+
+                    StudentQrVerificationToken qrToken = StudentQrVerificationToken.builder()
+                            .virtualStudentId(savedV)
+                            .token("STU_TOKEN_SABESH_2023_IT101")
+                            .status(TokenStatus.ACTIVE)
+                            .scanCount(0)
+                            .build();
+                    studentQrTokenRepository.save(qrToken);
+                    log.info("Initialized approved Student Profile and Digital ID for: sabeshpranith.it23@bitsathy.ac.in");
+                }
+            }
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -433,102 +523,140 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedMockStudentRecords() {
-        if (collegeStudentRecordRepository.count() > 0) return;
+        if (collegeStudentRecordRepository.count() == 0) {
+            // STU-000001 — matches the dev demo student account (TEST-STU-001)
+            collegeStudentRecordRepository.save(CollegeStudentRecord.builder()
+                    .institutionalRecordId("STU-000001")
+                    .registerNumber("TEST-STU-001")
+                    .name("Test Student [DEV]")              // must match for verification
+                    .dateOfBirth(LocalDate.of(2005, 6, 15))
+                    .degree("B.Tech")
+                    .departmentCode("IT")
+                    .batchStartYear(2023)
+                    .batchEndYear(2027)
+                    .studentType(StudentRecordType.DAY_SCHOLAR)
+                    .officialEmail("test.student@bitsathy.example")
+                    .phone("+91 99000 00001")
+                    .parentPhone("+91 99000 00002")
+                    .bloodGroup("O+")
+                    .address("[DEV] 42 Test Colony, Sathyamangalam, Erode, Tamil Nadu 638401")
+                    .recordStatus(CollegeRecordStatus.ACTIVE)
+                    .build());
 
-        // STU-000001 — matches the dev demo student account (TEST-STU-001)
-        collegeStudentRecordRepository.save(CollegeStudentRecord.builder()
-                .institutionalRecordId("STU-000001")
-                .registerNumber("TEST-STU-001")
-                .name("Test Student [DEV]")              // must match for verification
-                .dateOfBirth(LocalDate.of(2005, 6, 15))
-                .degree("B.Tech")
-                .departmentCode("IT")
-                .batchStartYear(2023)
-                .batchEndYear(2027)
-                .studentType(StudentRecordType.DAY_SCHOLAR)
-                .officialEmail("test.student@bitsathy.example")
-                .phone("+91 99000 00001")
-                .parentPhone("+91 99000 00002")
-                .bloodGroup("O+")
-                .address("[DEV] 42 Test Colony, Sathyamangalam, Erode, Tamil Nadu 638401")
-                .recordStatus(CollegeRecordStatus.ACTIVE)
-                .build());
+            // STU-000002 — Day Scholar, CSE, 2024 batch (unregistered — for Scenario A/B/C testing)
+            collegeStudentRecordRepository.save(CollegeStudentRecord.builder()
+                    .institutionalRecordId("STU-000002")
+                    .registerNumber("TEST-STU-002")
+                    .name("Dev TestUser Two")
+                    .dateOfBirth(LocalDate.of(2006, 3, 20))
+                    .degree("B.Tech")
+                    .departmentCode("CSE")
+                    .batchStartYear(2024)
+                    .batchEndYear(2028)
+                    .studentType(StudentRecordType.DAY_SCHOLAR)
+                    .officialEmail("dev.testuser2@bitsathy.example")
+                    .phone("+91 99000 00003")
+                    .parentPhone("+91 99000 00004")
+                    .bloodGroup("A+")
+                    .address("[DEV] 100 Sample Street, Erode, Tamil Nadu 638001")
+                    .recordStatus(CollegeRecordStatus.ACTIVE)
+                    .build());
 
-        // STU-000002 — Day Scholar, CSE, 2024 batch (unregistered — for Scenario A/B/C testing)
-        collegeStudentRecordRepository.save(CollegeStudentRecord.builder()
-                .institutionalRecordId("STU-000002")
-                .registerNumber("TEST-STU-002")
-                .name("Dev TestUser Two")
-                .dateOfBirth(LocalDate.of(2006, 3, 20))
-                .degree("B.Tech")
-                .departmentCode("CSE")
-                .batchStartYear(2024)
-                .batchEndYear(2028)
-                .studentType(StudentRecordType.DAY_SCHOLAR)
-                .officialEmail("dev.testuser2@bitsathy.example")
-                .phone("+91 99000 00003")
-                .parentPhone("+91 99000 00004")
-                .bloodGroup("A+")
-                .address("[DEV] 100 Sample Street, Erode, Tamil Nadu 638001")
-                .recordStatus(CollegeRecordStatus.ACTIVE)
-                .build());
+            // STU-000003 — Hosteler, ECE, 2025 batch (unregistered)
+            collegeStudentRecordRepository.save(CollegeStudentRecord.builder()
+                    .institutionalRecordId("STU-000003")
+                    .registerNumber("TEST-STU-003")
+                    .name("Dev TestUser Three")
+                    .dateOfBirth(LocalDate.of(2007, 8, 10))
+                    .degree("B.Tech")
+                    .departmentCode("ECE")
+                    .batchStartYear(2025)
+                    .batchEndYear(2029)
+                    .studentType(StudentRecordType.HOSTELER)
+                    .officialEmail("dev.testuser3@bitsathy.example")
+                    .phone("+91 99000 00005")
+                    .parentPhone("+91 99000 00006")
+                    .bloodGroup("B+")
+                    .address("[DEV] Hostel Block C, BIT Campus, Sathyamangalam")
+                    .recordStatus(CollegeRecordStatus.ACTIVE)
+                    .build());
 
-        // STU-000003 — Hosteler, ECE, 2025 batch (unregistered)
-        collegeStudentRecordRepository.save(CollegeStudentRecord.builder()
-                .institutionalRecordId("STU-000003")
-                .registerNumber("TEST-STU-003")
-                .name("Dev TestUser Three")
-                .dateOfBirth(LocalDate.of(2007, 8, 10))
-                .degree("B.Tech")
-                .departmentCode("ECE")
-                .batchStartYear(2025)
-                .batchEndYear(2029)
-                .studentType(StudentRecordType.HOSTELER)
-                .officialEmail("dev.testuser3@bitsathy.example")
-                .phone("+91 99000 00005")
-                .parentPhone("+91 99000 00006")
-                .bloodGroup("B+")
-                .address("[DEV] Hostel Block C, BIT Campus, Sathyamangalam")
-                .recordStatus(CollegeRecordStatus.ACTIVE)
-                .build());
+            log.info("[DEV] Seeded 3 mock CollegeStudentRecords (STU-000001..003) — DEVELOPMENT ONLY, not real BIT data");
+        }
 
-        log.info("[DEV] Seeded 3 mock CollegeStudentRecords (STU-000001..003) — DEVELOPMENT ONLY, not real BIT data");
+        if (!collegeStudentRecordRepository.existsByRegisterNumber("7376232IT101")) {
+            collegeStudentRecordRepository.save(CollegeStudentRecord.builder()
+                    .institutionalRecordId("STU-2023-IT101")
+                    .registerNumber("7376232IT101")
+                    .name("Sabesh Pranith M")
+                    .dateOfBirth(LocalDate.of(2005, 4, 18))
+                    .degree("B.Tech")
+                    .departmentCode("IT")
+                    .batchStartYear(2023)
+                    .batchEndYear(2027)
+                    .studentType(StudentRecordType.DAY_SCHOLAR)
+                    .officialEmail("sabeshpranith.it23@bitsathy.ac.in")
+                    .phone("+91 98421 78901")
+                    .parentPhone("+91 94432 10987")
+                    .bloodGroup("O+")
+                    .address("Bannari Amman Institute of Technology, Sathyamangalam, Erode, Tamil Nadu 638401")
+                    .recordStatus(CollegeRecordStatus.ACTIVE)
+                    .build());
+            log.info("[DEV] Seeded mock CollegeStudentRecord for Sabesh Pranith (7376232IT101)");
+        }
     }
 
     private void seedMockAlumniRecords() {
-        if (collegeAlumniRecordRepository.count() > 0) return;
+        if (collegeAlumniRecordRepository.count() == 0) {
+            // ALU-000001 — matches dev alumni account (alumni@bitsathy.ac.in)
+            collegeAlumniRecordRepository.save(CollegeAlumniRecord.builder()
+                    .institutionalRecordId("ALU-000001")
+                    .registerNumber("TEST-ALU-001")
+                    .name("Dev Alumni One")
+                    .dateOfBirth(LocalDate.of(1999, 4, 12))
+                    .degree("B.Tech")
+                    .departmentCode("IT")
+                    .graduationYear(2021)
+                    .officialEmail("dev.alumni1@bitsathy.example")
+                    .phone("+91 99000 10001")
+                    .address("[DEV] 10 Alumni Lane, Chennai, Tamil Nadu 600001")
+                    .recordStatus(CollegeRecordStatus.ACTIVE)
+                    .build());
 
-        // ALU-000001 — matches dev alumni account (alumni@bitsathy.ac.in)
-        collegeAlumniRecordRepository.save(CollegeAlumniRecord.builder()
-                .institutionalRecordId("ALU-000001")
-                .registerNumber("TEST-ALU-001")
-                .name("Dev Alumni One")
-                .dateOfBirth(LocalDate.of(1999, 4, 12))
-                .degree("B.Tech")
-                .departmentCode("IT")
-                .graduationYear(2021)
-                .officialEmail("dev.alumni1@bitsathy.example")
-                .phone("+91 99000 10001")
-                .address("[DEV] 10 Alumni Lane, Chennai, Tamil Nadu 600001")
-                .recordStatus(CollegeRecordStatus.ACTIVE)
-                .build());
+            // ALU-000002 — CSE, 2022 batch (unregistered — for testing)
+            collegeAlumniRecordRepository.save(CollegeAlumniRecord.builder()
+                    .institutionalRecordId("ALU-000002")
+                    .registerNumber("TEST-ALU-002")
+                    .name("Dev Alumni Two")
+                    .dateOfBirth(LocalDate.of(2000, 7, 25))
+                    .degree("B.Tech")
+                    .departmentCode("CSE")
+                    .graduationYear(2022)
+                    .officialEmail("dev.alumni2@bitsathy.example")
+                    .phone("+91 99000 10002")
+                    .address("[DEV] 25 Grad Avenue, Coimbatore, Tamil Nadu 641001")
+                    .recordStatus(CollegeRecordStatus.ACTIVE)
+                    .build());
 
-        // ALU-000002 — CSE, 2022 batch (unregistered — for testing)
-        collegeAlumniRecordRepository.save(CollegeAlumniRecord.builder()
-                .institutionalRecordId("ALU-000002")
-                .registerNumber("TEST-ALU-002")
-                .name("Dev Alumni Two")
-                .dateOfBirth(LocalDate.of(2000, 7, 25))
-                .degree("B.Tech")
-                .departmentCode("CSE")
-                .graduationYear(2022)
-                .officialEmail("dev.alumni2@bitsathy.example")
-                .phone("+91 99000 10002")
-                .address("[DEV] 25 Grad Avenue, Coimbatore, Tamil Nadu 641001")
-                .recordStatus(CollegeRecordStatus.ACTIVE)
-                .build());
+            log.info("[DEV] Seeded 2 mock CollegeAlumniRecords (ALU-000001..002) — DEVELOPMENT ONLY, not real BIT data");
+        }
 
-        log.info("[DEV] Seeded 2 mock CollegeAlumniRecords (ALU-000001..002) — DEVELOPMENT ONLY, not real BIT data");
+        if (!collegeAlumniRecordRepository.existsByRegisterNumber("7376232IT101")) {
+            collegeAlumniRecordRepository.save(CollegeAlumniRecord.builder()
+                    .institutionalRecordId("ALU-2023-IT101")
+                    .registerNumber("7376232IT101")
+                    .name("Sabesh Pranith M")
+                    .dateOfBirth(LocalDate.of(2005, 4, 18))
+                    .degree("B.Tech")
+                    .departmentCode("IT")
+                    .graduationYear(2027)
+                    .officialEmail("sabeshpranith.it23@bitsathy.ac.in")
+                    .phone("+91 98421 78901")
+                    .address("Bannari Amman Institute of Technology, Sathyamangalam, Erode, Tamil Nadu 638401")
+                    .recordStatus(CollegeRecordStatus.ACTIVE)
+                    .build());
+            log.info("[DEV] Seeded mock CollegeAlumniRecord for Sabesh Pranith (7376232IT101)");
+        }
     }
 
     private void seedSampleEvents() {
