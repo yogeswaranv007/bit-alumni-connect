@@ -58,6 +58,9 @@ import { StudentProfilePage } from './pages/student/StudentProfilePage';
 import { StudentDigitalIdPage } from './pages/student/StudentDigitalIdPage';
 import { StudentVerifyPage } from './pages/student/StudentVerifyPage';
 
+// Private Messaging
+import { MessagingPage } from './pages/messages/MessagingPage';
+
 export const App = () => {
   return (
     <Routes>
@@ -125,6 +128,7 @@ export const App = () => {
         <Route path="campus-visits" element={<FacultyCampusVisits />} />
         <Route path="campus-entry-logs" element={<AdminCampusEntryLogs />} />
         <Route path="community" element={<CommunityPage />} />
+        <Route path="messages" element={<Navigate to="/messages" replace />} />
         <Route index element={<Navigate to="/faculty/campus-visits" replace />} />
       </Route>
 
@@ -143,6 +147,7 @@ export const App = () => {
         <Route path="change-request" element={<ProfileChangeRequestPage />} />
         <Route path="virtual-id" element={<DigitalIdPage />} />
         <Route path="community" element={<CommunityPage />} />
+        <Route path="messages" element={<Navigate to="/messages" replace />} />
         <Route index element={<Navigate to="/alumni/dashboard" replace />} />
       </Route>
 
@@ -164,6 +169,7 @@ export const App = () => {
         <Route path="change-requests" element={<AdminChangeRequestsPage />} />
         <Route path="change-requests/:id" element={<AdminChangeRequestReviewPage />} />
         <Route path="community" element={<CommunityPage />} />
+        <Route path="messages" element={<Navigate to="/messages" replace />} />
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
       </Route>
 
@@ -180,7 +186,20 @@ export const App = () => {
         <Route path="profile" element={<StudentProfilePage />} />
         <Route path="digital-id" element={<StudentDigitalIdPage />} />
         <Route path="community" element={<CommunityPage />} />
+        <Route path="messages" element={<Navigate to="/messages" replace />} />
         <Route index element={<Navigate to="/student/dashboard" replace />} />
+      </Route>
+
+      {/* Universal Messages Route (Protected within DashboardLayout for all roles) */}
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<MessagingPage />} />
       </Route>
 
       {/* Fallback */}

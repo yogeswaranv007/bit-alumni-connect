@@ -22,7 +22,8 @@ import {
   Building,
   FileCheck,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  MessageSquare
 } from 'lucide-react';
 
 export const Navbar = ({ onToggleSidebar }) => {
@@ -313,6 +314,15 @@ export const Navbar = ({ onToggleSidebar }) => {
                 {/* Universal Global Notification Bell */}
                 <NotificationBell />
 
+                {/* Private Messages Link */}
+                <Link
+                  to="/messages"
+                  className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-bit-700 dark:hover:text-bit-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  title="Private Messages"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </Link>
+
                 {/* Role-Specific Quick Action Shortcuts */}
                 {isAlumni() && (
                   <div className="flex items-center space-x-2">
@@ -435,10 +445,21 @@ export const Navbar = ({ onToggleSidebar }) => {
             )}
           </div>
 
-          {/* Mobile Actions: Theme Toggle + Notification Bell + Menu Toggle */}
-          <div className="lg:hidden flex items-center space-x-2">
+          {/* Mobile Actions: Theme Toggle + Messages + Notification Bell + Menu Toggle */}
+          <div className="lg:hidden flex items-center space-x-1.5">
             <ThemeToggle className="p-1.5" />
-            {isAuthenticated && <NotificationBell />}
+            {isAuthenticated && (
+              <>
+                <Link
+                  to="/messages"
+                  className="p-1.5 text-slate-600 dark:text-slate-300 hover:text-bit-700 dark:hover:text-bit-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                  title="Messages"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                </Link>
+                <NotificationBell />
+              </>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
