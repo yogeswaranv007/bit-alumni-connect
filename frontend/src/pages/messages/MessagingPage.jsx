@@ -19,7 +19,6 @@ import {
   Clock,
   AlertCircle,
   Wifi,
-  WifiOff,
   User,
   Info,
   ChevronDown,
@@ -480,16 +479,6 @@ export const MessagingPage = () => {
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-140px)] min-h-[550px] transition-colors">
-      {/* Connectivity Ribbon (If Disconnected) */}
-      {wsStatus !== 'CONNECTED' && (
-        <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-1.5 flex items-center justify-between text-xs text-amber-700 dark:text-amber-300 font-medium">
-          <div className="flex items-center space-x-2">
-            <WifiOff className="w-3.5 h-3.5 animate-pulse" />
-            <span>Real-time channel offline. Reconnecting to STOMP relay...</span>
-          </div>
-          <span className="text-[10px] uppercase font-bold tracking-wider">{wsStatus}</span>
-        </div>
-      )}
 
       {/* Main Split-Pane Layout */}
       <div className="flex flex-1 overflow-hidden relative">
